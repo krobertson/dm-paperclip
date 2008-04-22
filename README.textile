@@ -21,10 +21,10 @@ In your model:
   class User
     include DataMapper::Resource
     include Paperclip::Resource
-
+  
     property :id, Fixnum, :serial => true
     property :username, String
-
+  
     has_attached_file :avatar,
                       :styles => { :medium => "300x300>",
                                    :thumb => "100x100>" }
