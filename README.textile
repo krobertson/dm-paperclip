@@ -1,0 +1,50 @@
+h1. DataMapper Paperclip
+
+DM-Paperclip is a port of Thoughtbot's Paperclip plugin to work with DataMapper 0.9.  This plugin is fully compatible with
+the original ActiveRecord-oriented Paperclip.  You could take an existing ActiveRecord database and use it with DataMapper.
+The module also includes updates validation handling and automatic including of the necessary 'property' fields into
+your model.
+
+To use it within your models, you need to ensure the three database fields are included.  They are {name}_file_name,
+{name}_content_type, and {name}_file_size.  The first two are strings, the final _file_size column is an integer. So
+if your user model has an avatar field, then you would add avatar_file_name, avatar_content_type, and avatar_file_size.
+
+As with the original Paperclip plugin, it allows processing of thumbnails at the time the record is saved though ImageMagick.
+It processes the thumbnails through the command-line applications instead of using RMagick.
+
+See the documentation for the +has_attached_file+ method for options.
+
+h2. Usage
+
+In your model:
+
+  class User
+    include DataMapper::Resource
+    include Paperclip::Resource
+
+    property :id, Fixnum, :serial => true
+    property :username, String
+
+    has_attached_file :avatar,
+                      :styles => { :medium => "300x300>",
+                                   :thumb => "100x100>" }
+  end
+
+In your edit and new views:
+
+  <% form_for @user, { :action => url(:user), :multipart => true } do %>
+    <%= file_field :name => 'avatar' %>
+  <% end %>
+
+In your controller:
+
+  def create
+    ...
+    @user.avatar = params[:avatar]
+  end
+
+In your show view:
+
+  <%= image_tag @user.avatar.url %>
+  <%= image_tag @user.avatar.url(:medium) %>
+  <%= image_tag @user.avatar.url(:thumb) %>
