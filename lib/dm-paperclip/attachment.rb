@@ -3,44 +3,61 @@ module Paperclip
   # deletes when the model is destroyed, and processes the file upon assignment.
   class Attachment
     
-    attr_reader :name, :instance, :file, :styles, :default_style
+    def self.default_options
+      @default_options ||= {
+        :url           => "/:attachment/:id/:style/:basename.:extension",
+        :path          => ":merb_root/public/:attachment/:id/:style/:basename.:extension",
+        :styles        => {},
+        :default_url   => "/:attachment/:style/missing.png",
+        :default_style => :original,
+        :validations   => [],
+        :storage       => :filesystem
+      }
+    end
+
+    attr_reader :name, :instance, :styles, :default_style
 
     # Creates an Attachment object. +name+ is the name of the attachment, +instance+ is the
     # ActiveRecord object instance it's attached to, and +options+ is the same as the hash
     # passed to +has_attached_file+.
-    def initialize name, instance, options
+    def initialize name, instance, options = {}
       @name              = name
       @instance          = instance
-      @url               = options[:url]           || 
-                           "/:attachment/:id/:style/:basename.:extension"
-      @path              = options[:path]          || 
-                           ":merb_root/public/:attachment/:id/:style/:basename.:extension"
-      @styles            = options[:styles]        || {}
-      @default_url       = options[:default_url]   || "/:attachment/:style/missing.png"
-      @validations       = options[:validations]   || []
-      @default_style     = options[:default_style] || :original
+
+      options = self.class.default_options.merge(options)
+
+      @url               = options[:url]
+      @path              = options[:path]
+      @styles            = options[:styles]
+      @default_url       = options[:default_url]
+      @validations       = options[:validations]
+      @default_style     = options[:default_style]
+      @storage           = options[:storage]
+      @whiny_thumbnails  = options[:whiny_thumbnails]
+      @options           = options
       @queued_for_delete = []
-      @processed_files   = {}
+      @queued_for_write  = {}
       @errors            = []
       @validation_errors = nil
       @dirty             = false
 
       normalize_style_definition
-
-      @file              = File.new(path) if original_filename && File.exists?(path)
+      initialize_storage
     end
 
     # What gets called when you call instance.attachment = File. It clears errors,
     # assigns attributes, processes the file, and runs validations. It also queues up
     # the previous file for deletion, to be flushed away on #save of its host.
     def assign uploaded_file
+      return nil unless valid_assignment?(uploaded_file)
+
       queue_existing_for_delete
       @errors            = []
-      @validation_errors = nil 
+      @validation_errors = nil
 
-      return nil unless valid_file?(uploaded_file)
+      return nil if uploaded_file.nil?
 
-      @file                               = uploaded_file.to_tempfile
+      @queued_for_write[:original]        = uploaded_file.to_tempfile
       @instance[:"#{@name}_file_name"]    = uploaded_file.original_filename
       @instance[:"#{@name}_content_type"] = uploaded_file.content_type
       @instance[:"#{@name}_file_size"]    = uploaded_file.size
@@ -57,8 +74,16 @@ module Paperclip
     # and can point to an action in your app, if you need fine grained security.
     # This is not recommended if you don't need the security, however, for
     # performance reasons.
-    def url style = nil
-      @file ? interpolate(@url, style) : interpolate(@default_url, style)
+    def url style = default_style
+      original_filename.nil? ? interpolate(@default_url, style) : interpolate(@url, style)
+    end
+
+    # Returns the path of the attachment as defined by the :path optionn. If the
+    # file is stored in the filesystem the path refers to the path of the file on
+    # disk. If the file is stored in S3, the path is the "key" part of th URL,
+    # and the :bucket option refers to the S3 bucket.
+    def path style = nil #:nodoc:
+      interpolate(@path, style)
     end
 
     # Alias to +url+
@@ -87,20 +112,11 @@ module Paperclip
       if valid?
         flush_deletes
         flush_writes
+        @dirty = false
         true
       else
         flush_errors
         false
-      end
-    end
-
-    # Returns an +IO+ representing the data of the file assigned to the given
-    # style. Useful for streaming with +send_file+.
-    def to_io style = nil
-      begin
-        @processed_files[style] || File.new(path(style))
-      rescue Errno::ENOENT
-        nil
       end
     end
 
@@ -118,24 +134,29 @@ module Paperclip
     def self.interpolations
       @interpolations ||= {
         :merb_root => lambda{|attachment,style| Merb.root },
-        :class      => lambda{|attachment,style| attachment.instance.class.to_s.pluralize },
-        :basename   => lambda do |attachment,style|
-          attachment.original_filename.gsub(/\.(.*?)$/, "")
-        end,
-        :extension  => lambda do |attachment,style| 
-          ((style = attachment.styles[style]) && style.last) ||
-          File.extname(attachment.original_filename).gsub(/^\.+/, "")
-        end,
-        :id         => lambda{|attachment,style| attachment.instance.id },
-        :attachment => lambda{|attachment,style| attachment.name.to_s.pluralize },
-        :style      => lambda{|attachment,style| style || attachment.default_style },
+        :class        => lambda do |attachment,style|
+                           attachment.instance.class.name.underscore.pluralize
+                         end,
+        :basename     => lambda do |attachment,style|
+                           attachment.original_filename.gsub(File.extname(attachment.original_filename), "")
+                         end,
+        :extension    => lambda do |attachment,style| 
+                           ((style = attachment.styles[style]) && style.last) ||
+                           File.extname(attachment.original_filename).gsub(/^\.+/, "")
+                         end,
+        :id           => lambda{|attachment,style| attachment.instance.id },
+        :id_partition => lambda do |attachment, style|
+                           ("%09d" % attachment.instance.id).scan(/\d{3}/).join("/")
+                         end,
+        :attachment   => lambda{|attachment,style| attachment.name.to_s.downcase.pluralize },
+        :style        => lambda{|attachment,style| style || attachment.default_style },
       }
     end
 
     private
 
-    def valid_file? file #:nodoc:
-      file.respond_to?(:original_filename) && file.respond_to?(:content_type)
+    def valid_assignment? file #:nodoc:
+      file.nil? || (file.respond_to?(:original_filename) && file.respond_to?(:content_type))
     end
 
     def validate #:nodoc:
@@ -155,43 +176,41 @@ module Paperclip
       end
     end
 
+    def initialize_storage
+      @storage_module = Paperclip::Storage.const_get(@storage.to_s.capitalize)
+      self.extend(@storage_module)
+    end
+
     def post_process #:nodoc:
-      return nil if @file.nil?
+      return if @queued_for_write[:original].nil?
       @styles.each do |name, args|
         begin
           dimensions, format = args
-          @processed_files[name] = Thumbnail.make(self.file, 
-                                                  dimensions, 
-                                                  format, 
-                                                  @whiny_thumbnails)
-        rescue Errno::ENOENT  => e
-          @errors << "could not be processed because the file does not exist."
+          @queued_for_write[name] = Thumbnail.make(@queued_for_write[:original], 
+                                                   dimensions,
+                                                   format, 
+                                                   @whiny_thumnails)
         rescue PaperclipError => e
-          @errors << e.message
+          @errors << e.message if @whiny_thumbnails
         end
       end
-      @processed_files[:original] = @file
     end
 
-    def interpolate pattern, style = nil #:nodoc:
-      style ||= @default_style
-      pattern = pattern.dup
-      self.class.interpolations.each do |tag, l|
-        pattern.gsub!(/:#{tag}/) do |match|
-          l.call( self, style )
+    def interpolate pattern, style = default_style #:nodoc:
+      interpolations = self.class.interpolations.sort{|a,b| a.first.to_s <=> b.first.to_s }
+      interpolations.reverse.inject( pattern.dup ) do |result, interpolation|
+        tag, blk = interpolation
+        result.gsub(/:#{tag}/) do |match|
+          blk.call( self, style )
         end
       end
-      pattern.gsub(%r{/+}, "/")
-    end
-
-    def path style = nil #:nodoc:
-      interpolate(@path, style)
     end
 
     def queue_existing_for_delete #:nodoc:
-      @queued_for_delete += @processed_files.values
-      @file               = nil
-      @processed_files    = {}
+      return if original_filename.blank?
+      @queued_for_delete += [:original, *@styles.keys].uniq.map do |style|
+        path(style) if exists?(style)
+      end.compact
       @instance[:"#{@name}_file_name"]    = nil
       @instance[:"#{@name}_content_type"] = nil
       @instance[:"#{@name}_file_size"]    = nil
@@ -203,24 +222,6 @@ module Paperclip
       end
     end
 
-    def flush_writes #:nodoc:
-      @processed_files.each do |style, file|
-        FileUtils.mkdir_p( File.dirname(path(style)) )
-        @processed_files[style] = file.stream_to(path(style)) unless file.path == path(style)
-      end
-      @file = @processed_files[nil]
-    end
-
-    def flush_deletes #:nodoc:
-      @queued_for_delete.compact.each do |file|
-        begin
-          FileUtils.rm(file.path)
-        rescue Errno::ENOENT => e
-          # ignore them
-        end
-      end
-      @queued_for_delete = []
-    end
   end
 end
 

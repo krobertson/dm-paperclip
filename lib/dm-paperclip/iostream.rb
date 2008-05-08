@@ -5,6 +5,7 @@ module IOStream
   # Returns a Tempfile containing the contents of the readable object.
   def to_tempfile
     tempfile = Tempfile.new("stream")
+    tempfile.binmode
     self.stream_to(tempfile)
   end
 
@@ -15,7 +16,7 @@ module IOStream
   # and returns the IO or Tempfile as passed in if one is sent as the destination.
   def stream_to path_or_file, in_blocks_of = 8192
     dstio = case path_or_file
-            when String   then File.new(path_or_file, "w+")
+            when String   then File.new(path_or_file, "wb+")
             when IO       then path_or_file
             when Tempfile then path_or_file
             end
@@ -24,7 +25,7 @@ module IOStream
     while self.read(in_blocks_of, buffer) do
       dstio.write(buffer)
     end
-    dstio.rewind
+    dstio.rewind    
     dstio
   end
 end

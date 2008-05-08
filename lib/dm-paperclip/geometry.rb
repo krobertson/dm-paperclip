@@ -18,12 +18,12 @@ module Paperclip
     def self.from_file file
       file = file.path if file.respond_to? "path"
       parse(`#{Paperclip.path_for_command('identify')} "#{file}"`) ||
-        raise(Errno::ENOENT, file)
+        raise(NotIdentifiedByImageMagickError.new("#{file} is not recognized by the 'identify' command."))
     end
 
     # Parses a "WxH" formatted string, where W is the width and H is the height.
     def self.parse string
-      if match = (string && string.match(/\b(\d*)x(\d*)([><\#\@\%^!])?\b/))
+      if match = (string && string.match(/\b(\d*)x(\d*)\b([\>\<\#\@\%^!])?/))
         Geometry.new(*match[1,3])
       end
     end
@@ -60,7 +60,7 @@ module Paperclip
 
     # Returns the width and height in a format suitable to be passed to Geometry.parse
     def to_s
-      "%dx%d" % [width, height]
+      "%dx%d%s" % [width, height, modifier]
     end
 
     # Same as to_s
@@ -79,22 +79,31 @@ module Paperclip
       ratio = Geometry.new( dst.width / self.width, dst.height / self.height )
 
       if crop
-        scale_geometry, scale = if ratio.horizontal? || ratio.square?
-          [ "%dx" % dst.width, ratio.width ]
-        else
-          [ "x%d" % dst.height, ratio.height ]
-        end
-
-        crop_geometry = if ratio.horizontal? || ratio.square?
-          "%dx%d+%d+%d" % [ dst.width, dst.height, 0, (self.height * scale - dst.height) / 2 ]
-                        else
-          "%dx%d+%d+%d" % [ dst.width, dst.height, (self.width * scale - dst.width) / 2, 0 ]
-        end
+        scale_geometry, scale = scaling(dst, ratio)
+        crop_geometry         = cropping(dst, ratio, scale)
       else
-        scale_geometry = dst.to_s
+        scale_geometry        = dst.to_s
       end
       
       [ scale_geometry, crop_geometry ]
+    end
+
+    private
+
+    def scaling dst, ratio
+      if ratio.horizontal? || ratio.square?
+        [ "%dx" % dst.width, ratio.width ]
+      else
+        [ "x%d" % dst.height, ratio.height ]
+      end
+    end
+
+    def cropping dst, ratio, scale
+      if ratio.horizontal? || ratio.square?
+        "%dx%d+%d+%d" % [ dst.width, dst.height, 0, (self.height * scale - dst.height) / 2 ]
+      else
+        "%dx%d+%d+%d" % [ dst.width, dst.height, (self.width * scale - dst.width) / 2, 0 ]
+      end
     end
   end
 end

@@ -10,14 +10,14 @@ module Paperclip
     # unless specified. Thumbnail creation will raise no errors unless
     # +whiny_thumbnails+ is true (which it is, by default.
     def initialize file, target_geometry, format = nil, whiny_thumbnails = true
-      @file = file
-      @crop = target_geometry[-1,1] == '#'
-      @target_geometry = Geometry.parse target_geometry
+      @file             = file
+      @crop             = target_geometry[-1,1] == '#'
+      @target_geometry  = Geometry.parse target_geometry
       @current_geometry = Geometry.from_file file
       @whiny_thumbnails = whiny_thumbnails
 
-      @current_format = File.extname(@file.path)
-      @basename       = File.basename(@file.path, @current_format)
+      @current_format   = File.extname(@file.path)
+      @basename         = File.basename(@file.path, @current_format)
       
       @format = format
     end
@@ -38,6 +38,7 @@ module Paperclip
     def make
       src = @file
       dst = Tempfile.new([@basename, @format].compact.join("."))
+      dst.binmode
 
       command = <<-end_command
         #{ Paperclip.path_for_command('convert') }
@@ -58,8 +59,8 @@ module Paperclip
     # into the thumbnail.
     def transformation_command
       scale, crop = @current_geometry.transformation_to(@target_geometry, crop?)
-      trans = "-scale #{scale}"
-      trans << " -crop #{crop} " if crop # TODO +repage
+      trans = "-scale \"#{scale}\""
+      trans << " -crop \"#{crop}\" +repage" if crop
       trans
     end
   end
