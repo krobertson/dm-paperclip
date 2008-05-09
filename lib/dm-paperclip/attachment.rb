@@ -123,7 +123,7 @@ module Paperclip
     # Returns the name of the file as originally assigned, and as lives in the
     # <attachment>_file_name attribute of the model.
     def original_filename
-      instance.send(:"#{name}_file_name")
+      @instance.send(:"#{name}_file_name")
     end
 
     # A hash of procs that are run during the interpolation of a path or url.
@@ -135,7 +135,7 @@ module Paperclip
       @interpolations ||= {
         :merb_root => lambda{|attachment,style| Merb.root },
         :class        => lambda do |attachment,style|
-                           attachment.instance.class.name.underscore.pluralize
+                           underscore(attachment.instance.class.name.pluralize)
                          end,
         :basename     => lambda do |attachment,style|
                            attachment.original_filename.gsub(File.extname(attachment.original_filename), "")
@@ -153,6 +153,13 @@ module Paperclip
       }
     end
 
+    def self.underscore(camel_cased_word)
+      camel_cased_word.to_s.gsub(/::/, '/').
+      gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
+      gsub(/([a-z\d])([A-Z])/,'\1_\2').
+      tr("-", "_").
+      downcase
+    end
     private
 
     def valid_assignment? file #:nodoc:
@@ -211,14 +218,14 @@ module Paperclip
       @queued_for_delete += [:original, *@styles.keys].uniq.map do |style|
         path(style) if exists?(style)
       end.compact
-      @instance[:"#{@name}_file_name"]    = nil
-      @instance[:"#{@name}_content_type"] = nil
-      @instance[:"#{@name}_file_size"]    = nil
+      @instance.send(:"#{@name}_file_name=", nil)
+      @instance.send(:"#{@name}_content_type=", nil)
+      @instance.send(:"#{@name}_file_size=", nil)
     end
 
     def flush_errors #:nodoc:
       @errors.each do |error|
-        instance.errors.add(name, error)
+        @instance.errors.add(name, error)
       end
     end
 

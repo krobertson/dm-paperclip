@@ -9,7 +9,7 @@ module Paperclip
     end
 
    module ClassMethods
-    attr_reader :attachment_definitions
+    attr_reader :@@attachment_definitions
 
     # +has_attached_file+ gives the class it is called on an attribute that maps to a file. This
     # is typically a file stored somewhere on the filesystem and has been uploaded by a user. 
@@ -60,8 +60,8 @@ module Paperclip
     def has_attached_file name, options = {}
       include InstanceMethods
 
-      @attachment_definitions ||= {} 
-      @attachment_definitions[name] = options
+      @@@attachment_definitions ||= {} 
+      @@@attachment_definitions[name] = options
       
       property "#{name}_file_name".to_sym, String
       property "#{name}_content_type".to_sym, String

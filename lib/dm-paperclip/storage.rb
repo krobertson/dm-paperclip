@@ -73,7 +73,7 @@ module Paperclip
 
       def parse_credentials creds
         creds = stringify_keys(find_credentials(creds))
-        symbolize_keys((creds[Merb.root] || creds))
+        symbolize_keys((creds[Merb.env] || creds))
       end
 
       def stringify_keys(hash)
