@@ -58,9 +58,9 @@ module Paperclip
       return nil if uploaded_file.nil?
 
       @queued_for_write[:original]        = uploaded_file.to_tempfile
-      @instance[:"#{@name}_file_name"]    = uploaded_file.original_filename
-      @instance[:"#{@name}_content_type"] = uploaded_file.content_type
-      @instance[:"#{@name}_file_size"]    = uploaded_file.size
+      @instance.send(:"#{@name}_file_name=", uploaded_file.original_filename)
+      @instance.send(:"#{@name}_content_type=", uploaded_file.content_type)
+      @instance.send(:"#{@name}_file_size=", uploaded_file.size)
 
       @dirty = true
 
@@ -123,7 +123,7 @@ module Paperclip
     # Returns the name of the file as originally assigned, and as lives in the
     # <attachment>_file_name attribute of the model.
     def original_filename
-      instance[:"#{name}_file_name"]
+      instance.send(:"#{name}_file_name")
     end
 
     # A hash of procs that are run during the interpolation of a path or url.

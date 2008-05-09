@@ -1,15 +1,6 @@
 module Paperclip
   module Validate
 
-    module ValidatesAttachmentSize
-      def self.included(base)
-        base.extend(ClassMethods)
-      end
-
-      module ClassMethods
-      end
-    end
-
     class SizeValidator < DataMapper::Validate::GenericValidator #:nodoc:
       def initialize(field_name, options={})
         super
@@ -33,29 +24,10 @@ module Paperclip
       end
     end
 
-    module ValidatesAttachmentPresence
-      def self.included(base)
-        base.extend(ClassMethods)
-      end
-
-      module ClassMethods
-      end
-    end
-
     class RequiredFieldValidator < DataMapper::Validate::GenericValidator #:nodoc:
       def initialize(field_name, options={})
         super
         @field_name, @options = field_name, options
-      end
-
-      def call(target)
-        value = target.validation_property_value(@field_name)
-        return true if !value.blank?
-
-        error_message = @options[:message] || "%s must not be blank".t(DataMapper::Inflection.humanize(@field_name))
-        add_error(target, error_message , @field_name)
-
-        return false
       end
 
       def call(target)
@@ -65,6 +37,29 @@ module Paperclip
           add_error(target, error_message , @field_name)
           return false
         end
+        return true
+      end
+    end
+
+    class ContentTypeValidator < DataMapper::Validate::GenericValidator #:nodoc:
+      def initialize(field_name, options={})
+        super
+        @field_name, @options = field_name, options
+      end
+
+      def call(target)
+        valid_types = [options[:content_type]].flatten
+        
+        unless @options[:content_type].blank?
+          content_type = target.validation_property_value(:"#{@field_name}_content_type")
+          unless valid_types.any?{|t| t === content_type }
+            error_message ||= @options[:message] unless @options[:message].nil?
+            error_message ||= "%s's content type of '%s' is not a valid content type".t(DataMapper::Inflection.humanize(@field_name), content_type)
+            add_error(target, error_message , @field_name)
+            return false
+          end
+        end
+
         return true
       end
     end

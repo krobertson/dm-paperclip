@@ -72,8 +72,22 @@ module Paperclip
       end
 
       def parse_credentials creds
-        creds = find_credentials(creds).stringify_keys
-        (creds[ENV['RAILS_ENV']] || creds).symbolize_keys
+        creds = stringify_keys(find_credentials(creds))
+        symbolize_keys((creds[Merb.root] || creds))
+      end
+
+      def stringify_keys(hash)
+        hash.inject({}) do |options, (key, value)|
+          options[key.to_s] = value
+          options
+        end
+      end
+
+      def symbolize_keys(hash)
+        hash.inject({}) do |options, (key, value)|
+          options[key.to_sym || key] = value
+          options
+        end
       end
       
       def exists?(style = default_style)
