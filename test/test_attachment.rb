@@ -95,9 +95,9 @@ class AttachmentTest < Test::Unit::TestCase
       @instance = stub
       @instance.stubs(:id).returns(41)
       @instance.stubs(:class).returns(Dummy)
-      @instance.stubs(:[]).with(:test_file_name).returns(nil)
-      @instance.stubs(:[]).with(:test_content_type).returns(nil)
-      @instance.stubs(:[]).with(:test_file_size).returns(nil)
+      @instance.stubs(:test_file_name).returns(nil)
+      @instance.stubs(:test_content_type).returns(nil)
+      @instance.stubs(:test_file_size).returns(nil)
       @attachment = Paperclip::Attachment.new(:test,
                                               @instance)
       @file = File.new(File.join(File.dirname(__FILE__),
@@ -113,9 +113,9 @@ class AttachmentTest < Test::Unit::TestCase
     
     context "with a file assigned in the database" do
       setup do
-        @instance.stubs(:[]).with(:test_file_name).returns("5k.png")
-        @instance.stubs(:[]).with(:test_content_type).returns("image/png")
-        @instance.stubs(:[]).with(:test_file_size).returns(12345)
+        @instance.stubs(:test_file_name).returns("5k.png")
+        @instance.stubs(:test_content_type).returns("image/png")
+        @instance.stubs(:test_file_size).returns(12345)
       end
 
       should "return a correct url even if the file does not exist" do
@@ -128,7 +128,7 @@ class AttachmentTest < Test::Unit::TestCase
       end
 
       should "return the proper path when filename has multiple .'s" do
-        @instance.stubs(:[]).with(:test_file_name).returns("5k.old.png")      
+        @instance.stubs(:test_file_name).returns("5k.old.png")      
         assert_equal "./test/../tmp/tests/dummies/original/41/5k.old.png", @attachment.path
       end
 
@@ -144,13 +144,12 @@ class AttachmentTest < Test::Unit::TestCase
 
         context "and assigned a file" do
           setup do
-            @instance.expects(:[]=).with(:test_file_name,
-                                         File.basename(@file.path))
-            @instance.expects(:[]=).with(:test_content_type, "image/png")
-            @instance.expects(:[]=).with(:test_file_size, @file.size)
-            @instance.expects(:[]=).with(:test_file_name, nil)
-            @instance.expects(:[]=).with(:test_content_type, nil)
-            @instance.expects(:[]=).with(:test_file_size, nil)
+            @instance.expects(:test_file_name=).with(nil)
+            @instance.expects(:test_content_type=).with(nil)
+            @instance.expects(:test_file_size=).with(nil)
+            @instance.expects(:test_file_name=).with(File.basename(@file.path))
+            @instance.expects(:test_content_type=).with("image/png")
+            @instance.expects(:test_file_size=).with(@file.size)
             @attachment.assign(@file)
           end
 
@@ -200,9 +199,9 @@ class AttachmentTest < Test::Unit::TestCase
                 @existing_names = @attachment.styles.keys.collect do |style|
                   @attachment.path(style)
                 end
-                @instance.expects(:[]=).with(:test_file_name, nil)
-                @instance.expects(:[]=).with(:test_content_type, nil)
-                @instance.expects(:[]=).with(:test_file_size, nil)
+                @instance.expects(:test_file_name=).with(nil)
+                @instance.expects(:test_content_type=).with(nil)
+                @instance.expects(:test_file_size=).with(nil)
                 @attachment.assign nil
                 @attachment.save
               end

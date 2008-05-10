@@ -40,7 +40,7 @@ def rebuild_model options = {}
   DataMapper::Migration.new( 1, :drop_dummies_table ) do
     up do
       create_table :dummies do
-        column :id, "integer"
+        column :id, "integer", true
         column :other, "varchar(255)"
         column :avatar_file_name, "varchar(255)"
         column :avatar_content_type, "varchar(255)"

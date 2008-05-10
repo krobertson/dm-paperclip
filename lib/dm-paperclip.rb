@@ -120,10 +120,12 @@ module Paperclip
 
       @@attachment_definitions = {} if @@attachment_definitions.nil?
       @@attachment_definitions[name] = {:validations => []}.merge(options)
+      
+      property_options = options.delete_if { |k,v| ![ :public, :protected, :private, :accessor, :reader, :writer ].include?(key) }
 
-      property "#{name}_file_name".to_sym, String
-      property "#{name}_content_type".to_sym, String
-      property "#{name}_file_size".to_sym, Fixnum
+      property "#{name}_file_name".to_sym, String, property_options
+      property "#{name}_content_type".to_sym, String, property_options
+      property "#{name}_file_size".to_sym, Fixnum, property_options
 
       after :save, :save_attached_files
       before :destroy, :destroy_attached_files
@@ -241,8 +243,8 @@ module Paperclip
 
     def destroy_attached_files
       each_attachment do |name, attachment|
-        attachment.send(:queue_existing_for_delete)
-        attachment.send(:flush_deletes)
+        attachment.queue_existing_for_delete
+        attachment.flush_deletes
       end
     end
   end

@@ -7,32 +7,28 @@ class PaperclipTest < Test::Unit::TestCase
       @file = File.new(File.join(FIXTURES_DIR, "5k.png"))
     end
 
-    context "that is attr_protected" do
+    context "that is write protected" do
       setup do
         Dummy.class_eval do
-          attr_protected :avatar
+          has_attached_file :image, { :protected => true }
         end
         @dummy = Dummy.new
       end
 
       should "not assign the avatar on mass-set" do
-        @dummy.logger.expects(:debug)
-
-        @dummy.attributes = { :other => "I'm set!",
-                              :avatar => @file }
+        @dummy.attributes = { :other => "I'm set!" } #,
+                              #:image => @file }
         
         assert_equal "I'm set!", @dummy.other
-        assert ! @dummy.avatar?
+        assert ! @dummy.image?
       end
 
       should "still allow assigment on normal set" do
-        @dummy.logger.expects(:debug).times(0)
-
         @dummy.other  = "I'm set!"
-        @dummy.avatar = @file
+        @dummy.image = @file
         
         assert_equal "I'm set!", @dummy.other
-        assert @dummy.avatar?
+        assert @dummy.image?
       end
     end
 
