@@ -65,7 +65,7 @@ module Paperclip
       
       property "#{name}_file_name".to_sym, String
       property "#{name}_content_type".to_sym, String
-      property "#{name}_file_size".to_sym, Fixnum
+      property "#{name}_file_size".to_sym, Integer
 
       after :save, :save_attached_files
       before :destroy, :destroy_attached_files

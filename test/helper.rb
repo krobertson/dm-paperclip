@@ -61,7 +61,7 @@ def rebuild_model options = {}
     include DataMapper::Validate
     include Paperclip
 #    include Paperclip::Validations
-    property :id, Fixnum, :serial => true
+    property :id, Integer, :serial => true
     property :other, String
     has_attached_file :avatar, options
   end
