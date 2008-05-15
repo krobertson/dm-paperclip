@@ -59,7 +59,7 @@ def rebuild_model options = {}
   Dummy.class_eval do
     include DataMapper::Resource
     include DataMapper::Validate
-    include Paperclip
+    include Paperclip::Resource
 #    include Paperclip::Validations
     property :id, Integer, :serial => true
     property :other, String

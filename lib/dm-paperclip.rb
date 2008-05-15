@@ -54,16 +54,18 @@ module Paperclip
       path = [options[:image_magick_path], command].compact
       File.join(*path)
     end
-
-    def included base #:nodoc:
-      base.extend ClassMethods
-    end
   end
 
   class PaperclipError < StandardError #:nodoc:
   end
 
   class NotIdentifiedByImageMagickError < PaperclipError #:nodoc:
+  end
+
+  module Resource
+    def self.included(base)
+      base.extend Paperclip::ClassMethods
+    end
   end
 
   module ClassMethods
