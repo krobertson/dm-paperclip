@@ -35,7 +35,7 @@ require File.join(File.dirname(__FILE__), 'dm-paperclip', 'storage')
 require File.join(File.dirname(__FILE__), 'dm-paperclip', 'attachment')
 
 module Paperclip
-  VERSION = "2.1.0"
+  VERSION = "2.1.2"
   class << self
     # Provides configurability to Paperclip. There are a number of options available, such as:
     # * whiny_thumbnails: Will raise an error if Paperclip cannot process thumbnails of 
