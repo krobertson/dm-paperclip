@@ -30,7 +30,7 @@ Rake::RDocTask.new(:doc) do |rdoc|
   rdoc.rdoc_dir = 'doc'
   rdoc.title    = 'DM-Paperclip'
   rdoc.options << '--line-numbers' << '--inline-source'
-  rdoc.rdoc_files.include('README')
+  rdoc.rdoc_files.include('README.textile')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
  
@@ -45,6 +45,7 @@ end
 desc 'Clean up files.'
 task :clean do |t|
   FileUtils.rm_rf "doc"
+  FileUtils.rm_rf "coverage"
   FileUtils.rm_rf "tmp"
   FileUtils.rm_rf "pkg"
   FileUtils.rm_rf "log"
