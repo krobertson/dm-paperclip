@@ -28,6 +28,24 @@ In your model:
                                    :thumb => "100x100>" }
   end
 
+Your database will need to add three columns, +avatar_file_name+ (varchar), +avatar_content_type+ (varchar), and
++avatar_file_size+ (integer).  You can either add these manually, auto-migrate, or use the following migration:
+
+  migration( 1, :add_user_paperclip_fields ) do
+  up do
+      modify_table :users do
+        add_column :avatar_file_name, "varchar(255)"
+        add_column :avatar_content_type, "varchar(255)"
+        add_column :avatar_file_size, "integer"
+      end
+    end
+    down do
+      modify_table :users do
+        drop_columns :avatar_file_name, :avatar_content_type, :avatar_file_size
+      end
+    end
+  end
+
 In your edit and new views:
 
   <% form_for @user, { :action => url(:user), :multipart => true } do %>
@@ -46,3 +64,10 @@ In your show view:
   <%= image_tag @user.avatar.url %>
   <%= image_tag @user.avatar.url(:medium) %>
   <%= image_tag @user.avatar.url(:thumb) %>
+
+The following validations are available:
+
+  validates_attachment_presence :avatar
+  validates_attachment_content_type :avatar, :content_type => "image/png"
+  validates_attachment_size :avatar, :in => 1..10240
+  validates_attachment_thumbnails :avatar

@@ -75,20 +75,6 @@ module Paperclip
         creds = stringify_keys(find_credentials(creds))
         symbolize_keys((creds[Merb.env] || creds))
       end
-
-      def stringify_keys(hash)
-        hash.inject({}) do |options, (key, value)|
-          options[key.to_s] = value
-          options
-        end
-      end
-
-      def symbolize_keys(hash)
-        hash.inject({}) do |options, (key, value)|
-          options[key.to_sym || key] = value
-          options
-        end
-      end
       
       def exists?(style = default_style)
         s3_bucket.key(path(style)) ? true : false
@@ -140,6 +126,22 @@ module Paperclip
         end
       end
       private :find_credentials
+
+      private
+
+      def stringify_keys(hash)
+        hash.inject({}) do |options, (key, value)|
+          options[key.to_s] = value
+          options
+        end
+      end
+
+      def symbolize_keys(hash)
+        hash.inject({}) do |options, (key, value)|
+          options[key.to_sym || key] = value
+          options
+        end
+      end
 
     end
   end

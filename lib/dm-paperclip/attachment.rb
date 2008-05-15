@@ -58,9 +58,10 @@ module Paperclip
       return nil if uploaded_file.nil?
 
       @queued_for_write[:original]        = uploaded_file.to_tempfile
-      @instance.send(:"#{@name}_file_name=", uploaded_file.original_filename)
-      @instance.send(:"#{@name}_content_type=", uploaded_file.content_type)
-      @instance.send(:"#{@name}_file_size=", uploaded_file.size)
+      newvals = { :"#{@name}_file_name"    => uploaded_file.original_filename,
+                  :"#{@name}_content_type" => uploaded_file.content_type,
+                  :"#{@name}_file_size"    => uploaded_file.size }
+      @instance.update_attributes(newvals)
 
       @dirty = true
 
@@ -123,7 +124,7 @@ module Paperclip
     # Returns the name of the file as originally assigned, and as lives in the
     # <attachment>_file_name attribute of the model.
     def original_filename
-      @instance.send(:"#{name}_file_name")
+      @instance.attribute_get(:"#{name}_file_name")
     end
 
     # A hash of procs that are run during the interpolation of a path or url.
@@ -169,6 +170,8 @@ module Paperclip
       old_original.close if old_original.respond_to?(:close)
     end
 
+    private
+
     def self.underscore(camel_cased_word)
       camel_cased_word.to_s.gsub(/::/, '/').
       gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
@@ -176,7 +179,6 @@ module Paperclip
       tr("-", "_").
       downcase
     end
-    private
 
     def valid_assignment? file #:nodoc:
       file.nil? || (file.respond_to?(:original_filename) && file.respond_to?(:content_type))
@@ -234,9 +236,10 @@ module Paperclip
       @queued_for_delete += [:original, *@styles.keys].uniq.map do |style|
         path(style) if exists?(style)
       end.compact
-      @instance.send(:"#{@name}_file_name=", nil)
-      @instance.send(:"#{@name}_content_type=", nil)
-      @instance.send(:"#{@name}_file_size=", nil)
+      newvals = { :"#{@name}_file_name"    => nil,
+                  :"#{@name}_content_type" => nil,
+                  :"#{@name}_file_size"    => nil }
+      @instance.update_attributes(newvals)
     end
 
     def flush_errors #:nodoc:
