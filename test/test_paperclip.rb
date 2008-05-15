@@ -82,8 +82,8 @@ class PaperclipTest < Test::Unit::TestCase
 
           should "not have any errors" do
             @dummy.avatar = @file
-            assert @dummy.avatar.valid?
-            assert_equal 0, @dummy.avatar.errors.length
+            assert @dummy.valid?
+            assert_equal 0, @dummy.errors.length
           end
         end
 
@@ -94,8 +94,8 @@ class PaperclipTest < Test::Unit::TestCase
 
           should "have errors" do
             @dummy.avatar = @file
-            assert ! @dummy.avatar.valid?
-            assert_equal 1, @dummy.avatar.errors.length
+            assert ! @dummy.valid?
+            assert_equal 1, @dummy.errors.length
           end
         end
         
@@ -107,9 +107,9 @@ class PaperclipTest < Test::Unit::TestCase
 #          should "have errors" do
 #            if args[1] && args[1][:message] && args[4]
 #              @dummy.avatar = @file
-#              assert ! @dummy.avatar.valid?
-#              assert_equal 1, @dummy.avatar.errors.length
-#              assert_equal args[4], @dummy.avatar.errors[0]
+#              assert ! @dummy.valid?
+#              assert_equal 1, @dummy.errors.length
+#              assert_equal args[4], @dummy.errors[0]
 #            end
 #          end
 #        end

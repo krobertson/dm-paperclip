@@ -100,6 +100,7 @@ class IntegrationTest < Test::Unit::TestCase
       @dummy.avatar = "not a valid file but not nil"
       assert_equal File.basename(@file.path), @dummy.avatar_file_name
       assert @dummy.valid?
+      @dummy.other = 'dirty'  # must have a change in order to save
       assert @dummy.save
 
       saved_paths.each do |p|

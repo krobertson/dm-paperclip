@@ -144,6 +144,8 @@ module Paperclip
       define_method "#{name}?" do
         ! attachment_for(name).original_filename.blank?
       end
+
+      add_validator_to_context(opts_from_validator_args([name]), [name], Paperclip::Validate::CopyAttachmentErrors)
     end
 
     # Places ActiveRecord-style validations on the size of the file assigned. The
@@ -152,29 +154,9 @@ module Paperclip
     # * +less_than+: equivalent to :in => 0..options[:less_than]
     # * +greater_than+: equivalent to :in => options[:greater_than]..Infinity
     # * +message+: error message to display, use :min and :max as replacements
-    #def validates_attachment_size(*fields)
-    #  opts = opts_from_validator_args(fields)
-    #  add_validator_to_context(opts, fields, Paperclip::Validate::SizeValidator)
-    #end
-    def validates_attachment_size name, options = {}
-      @@attachment_definitions[name][:validations] << lambda do |attachment, instance|
-        unless options[:greater_than].nil?
-          options[:in] = (options[:greater_than]..(1/0)) # 1/0 => Infinity
-        end
-        unless options[:less_than].nil?
-          options[:in] = (0..options[:less_than])
-        end
-        unless attachment.original_filename.blank? || options[:in].include?(instance.send(:"#{name}_file_size").to_i)
-          min = options[:in].first
-          max = options[:in].last
-          
-          if options[:message]
-            options[:message].gsub(/:min/, min.to_s).gsub(/:max/, max.to_s)
-          else
-            "file size is not between #{min} and #{max} bytes."
-          end
-        end
-      end
+    def validates_attachment_size(*fields)
+      opts = opts_from_validator_args(fields)
+      add_validator_to_context(opts, fields, Paperclip::Validate::SizeValidator)
     end
 
     # Adds errors if thumbnail creation fails. The same as specifying :whiny_thumbnails => true.
@@ -183,39 +165,18 @@ module Paperclip
     end
 
     # Places ActiveRecord-style validations on the presence of a file.
-    #def validates_attachment_presence(*fields)
-    #  opts = opts_from_validator_args(fields)
-    #  add_validator_to_context(opts, fields, Paperclip::Validate::RequiredFieldValidator)
-    #end
-    def validates_attachment_presence name, options = {}
-      @@attachment_definitions[name][:validations] << lambda do |attachment, instance|
-        if attachment.original_filename.blank?
-          options[:message] || "must be set."
-        end
-      end
+    def validates_attachment_presence(*fields)
+      opts = opts_from_validator_args(fields)
+      add_validator_to_context(opts, fields, Paperclip::Validate::RequiredFieldValidator)
     end
     
     # Places ActiveRecord-style validations on the content type of the file assigned. The
     # possible options are:
     # * +content_type+: Allowed content types.  Can be a single content type or an array.  Allows all by default.
     # * +message+: The message to display when the uploaded file has an invalid content type.
-    #def validates_attachment_content_type(*fields)
-    #  opts = opts_from_validator_args(fields)
-    #  add_validator_to_context(opts, fields, Paperclip::Validate::ContentTypeValidator)
-    #end
-    def validates_attachment_content_type name, options = {}
-      @@attachment_definitions[name][:validations] << lambda do |attachment, instance|
-        valid_types = [options[:content_type]].flatten
-        
-        unless attachment.original_filename.nil?
-          unless options[:content_type].blank?
-            content_type = instance.send(:"#{name}_content_type")
-            unless valid_types.any?{|t| t === content_type }
-              options[:message] #|| ActiveRecord::Errors.default_error_messages[:inclusion]
-            end
-          end
-        end
-      end
+    def validates_attachment_content_type(*fields)
+      opts = opts_from_validator_args(fields)
+      add_validator_to_context(opts, fields, Paperclip::Validate::ContentTypeValidator)
     end
 
     # Returns the attachment definitions defined by each call to has_attached_file.

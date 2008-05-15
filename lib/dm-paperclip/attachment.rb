@@ -93,7 +93,7 @@ module Paperclip
 
     # Returns true if there are any errors on this attachment.
     def valid?
-      errors.length == 0
+      @errors.length == 0
     end
 
     # Returns an array containing the errors on this attachment.
@@ -169,7 +169,7 @@ module Paperclip
     def validate #:nodoc:
       unless @validation_errors
         @validation_errors = @validations.collect do |v|
-          v.call(self, instance)
+          v.call(self, @instance)
         end.flatten.compact.uniq
         @errors += @validation_errors
       end

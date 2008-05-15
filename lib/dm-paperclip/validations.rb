@@ -32,7 +32,7 @@ module Paperclip
 
       def call(target)
         field_value = target.validation_property_value(@field_name)
-        if field_value.nil? || field_value.file.nil? || !File.exist(field_value.file.path)
+        if field_value.nil? || field_value.original_filename.blank?
           error_message = @options[:message] || "%s must be set".t(DataMapper::Inflection.humanize(@field_name))
           add_error(target, error_message , @field_name)
           return false
@@ -48,18 +48,38 @@ module Paperclip
       end
 
       def call(target)
-        valid_types = [options[:content_type]].flatten
-        
-        unless @options[:content_type].blank?
-          content_type = target.validation_property_value(:"#{@field_name}_content_type")
-          unless valid_types.any?{|t| t === content_type }
-            error_message ||= @options[:message] unless @options[:message].nil?
-            error_message ||= "%s's content type of '%s' is not a valid content type".t(DataMapper::Inflection.humanize(@field_name), content_type)
-            add_error(target, error_message , @field_name)
-            return false
+        valid_types = [@options[:content_type]].flatten
+        field_value = target.validation_property_value(@field_name)
+
+        unless field_value.nil? || field_value.original_filename.blank?
+          unless @options[:content_type].blank?
+            content_type = target.validation_property_value(:"#{@field_name}_content_type")
+            unless valid_types.any?{|t| t === content_type }
+              error_message ||= @options[:message] unless @options[:message].nil?
+              error_message ||= "%s's content type of '%s' is not a valid content type".t(DataMapper::Inflection.humanize(@field_name), content_type)
+              add_error(target, error_message , @field_name)
+              return false
+            end
           end
         end
 
+        return true
+      end
+    end
+
+    class CopyAttachmentErrors < DataMapper::Validate::GenericValidator #:nodoc:
+      def initialize(field_name, options={})
+        super
+        @field_name, @options = field_name, options
+      end
+
+      def call(target)
+        field_value = target.validation_property_value(@field_name)
+        unless field_value.nil? || field_value.original_filename.blank?
+          return true if field_value.errors.length == 0
+          field_value.errors.each { |message| add_error(target, message, @field_name) }
+          return false
+        end
         return true
       end
     end
