@@ -37,7 +37,7 @@ require File.join(File.dirname(__FILE__), 'dm-paperclip', 'attachment')
 require File.join(File.dirname(__FILE__), 'dm-paperclip', 'validations') unless defined?(DataMapper::Validate).nil?
 
 module Paperclip
-  VERSION = "2.1.2"
+  VERSION = "2.1.2.1"
   class << self
     # Provides configurability to Paperclip. There are a number of options available, such as:
     # * whiny_thumbnails: Will raise an error if Paperclip cannot process thumbnails of 
@@ -214,16 +214,12 @@ module Paperclip
 
     def destroy_attached_files
       each_attachment do |name, attachment|
-        attachment.queue_existing_for_delete
-        attachment.flush_deletes
+        attachment.send(:queue_existing_for_delete)
+        attachment.send(:flush_deletes)
       end
     end
   end
 
 end
 
-# Set it all up.
-if Object.const_defined?("ActiveRecord")
-  ActiveRecord::Base.send(:include, Paperclip)
-  File.send(:include, Paperclip::Upfile)
-end
+File.send(:include, Paperclip::Upfile)
