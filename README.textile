@@ -14,6 +14,19 @@ It processes the thumbnails through the command-line applications instead of usi
 
 See the documentation for the +has_attached_file+ method for options.
 
+h2. Code
+
+The code DM-Paperclip is available at Github:
+
+  git clone git://github.com/krobertson/paperclip.git
+
+It is regularly updated to keep in sync with the latest from Thoughtbot.
+
+Releases are tagged within the repository and versioned the same as the original model.  You can also get the latest release
+packaged as a gem through Rubyforge:
+
+  sudo gem install dm-paperclip
+
 h2. Usage
 
 In your model:
