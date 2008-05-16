@@ -36,6 +36,11 @@ ENV['RAILS_ENV'] ||= 'test'
 FIXTURES_DIR = File.join(File.dirname(__FILE__), "fixtures") 
 DataMapper.setup(:default, 'sqlite3::memory:')
 
+unless defined?(Mash)
+  class Mash < Hash
+  end
+end
+
 def rebuild_model options = {}
   DataMapper::Migration.new( 1, :drop_dummies_table ) do
     up do

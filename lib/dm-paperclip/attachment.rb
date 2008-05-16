@@ -57,11 +57,19 @@ module Paperclip
 
       return nil if uploaded_file.nil?
 
-      @queued_for_write[:original]        = uploaded_file.to_tempfile
-      newvals = { :"#{@name}_file_name"    => uploaded_file.original_filename,
-                  :"#{@name}_content_type" => uploaded_file.content_type,
-                  :"#{@name}_file_size"    => uploaded_file.size }
-      @instance.update_attributes(newvals)
+      if uploaded_file.is_a?(Mash)
+        @queued_for_write[:original]          = uploaded_file['tempfile']
+        newvals = { :"#{@name}_file_name"    => uploaded_file['filename'],
+                    :"#{@name}_content_type" => uploaded_file['content_type'],
+                    :"#{@name}_file_size"    => uploaded_file['size'] }
+        @instance.update_attributes(newvals)
+      else
+        @queued_for_write[:original]          = uploaded_file.to_tempfile
+        newvals = { :"#{@name}_file_name"    => uploaded_file.original_filename,
+                    :"#{@name}_content_type" => uploaded_file.content_type,
+                    :"#{@name}_file_size"    => uploaded_file.size }
+        @instance.update_attributes(newvals)
+      end
 
       @dirty = true
 
@@ -181,7 +189,12 @@ module Paperclip
     end
 
     def valid_assignment? file #:nodoc:
-      file.nil? || (file.respond_to?(:original_filename) && file.respond_to?(:content_type))
+      return true if file.nil?
+      if(file.is_a?(File))
+        (file.respond_to?(:original_filename) && file.respond_to?(:content_type))
+      elsif(file.is_a?(Mash))
+        (file.include?('tempfile') && file.include?('content_type') && file.include?('size') && file.include?('filename'))
+      end
     end
 
     def validate #:nodoc:
