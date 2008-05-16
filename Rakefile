@@ -87,7 +87,7 @@ task :install => [ :package ] do
 end
 
 desc "Release new version"
-task :release => [:test, :sync_docs, :gem] do
+task :release => [:test, :gem] do
   require 'rubygems'
   require 'rubyforge'
   r = RubyForge.new
