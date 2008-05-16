@@ -71,3 +71,20 @@ The following validations are available:
   validates_attachment_content_type :avatar, :content_type => "image/png"
   validates_attachment_size :avatar, :in => 1..10240
   validates_attachment_thumbnails :avatar
+
+In order to use validations, you must have loaded the 'dm-validations' gem into your app
+(available as a part of dm-more).  If the gem isn't loaded before DM-Paperclip is loaded,
+the validation methods will be excluded.  You will also need to include DataMapper::Validate
+into your mode:
+
+  class User
+    include DataMapper::Resource
+    include DataMapper::Validate
+    include Paperclip::Resource
+    property :id, Integer, :serial => true
+    property :username, String
+    has_attached_file :avatar,
+                      :styles => { :medium => "300x300>",
+                                   :thumb => "100x100>" }
+    validates_attachment_size :avatar, :in => 1..5120
+  end

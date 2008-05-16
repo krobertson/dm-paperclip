@@ -30,9 +30,11 @@ require File.join(File.dirname(__FILE__), 'dm-paperclip', 'upfile')
 require File.join(File.dirname(__FILE__), 'dm-paperclip', 'iostream')
 require File.join(File.dirname(__FILE__), 'dm-paperclip', 'geometry')
 require File.join(File.dirname(__FILE__), 'dm-paperclip', 'thumbnail')
-require File.join(File.dirname(__FILE__), 'dm-paperclip', 'validations')
 require File.join(File.dirname(__FILE__), 'dm-paperclip', 'storage')
 require File.join(File.dirname(__FILE__), 'dm-paperclip', 'attachment')
+
+# Only include validations if dm-validations is loaded
+require File.join(File.dirname(__FILE__), 'dm-paperclip', 'validations') unless defined?(DataMapper::Validate).nil?
 
 module Paperclip
   VERSION = "2.1.2"
@@ -145,8 +147,12 @@ module Paperclip
         ! attachment_for(name).original_filename.blank?
       end
 
-      add_validator_to_context(opts_from_validator_args([name]), [name], Paperclip::Validate::CopyAttachmentErrors)
+      unless defined?(DataMapper::Validate).nil?
+        add_validator_to_context(opts_from_validator_args([name]), [name], Paperclip::Validate::CopyAttachmentErrors)
+      end
     end
+
+    unless defined?(DataMapper::Validate).nil?
 
     # Places ActiveRecord-style validations on the size of the file assigned. The
     # possible options are:
@@ -177,6 +183,8 @@ module Paperclip
     def validates_attachment_content_type(*fields)
       opts = opts_from_validator_args(fields)
       add_validator_to_context(opts, fields, Paperclip::Validate::ContentTypeValidator)
+    end
+
     end
 
     # Returns the attachment definitions defined by each call to has_attached_file.

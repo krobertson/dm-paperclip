@@ -85,3 +85,15 @@ desc "Install #{spec.name} #{spec.version}"
 task :install => [ :package ] do
   sh "#{SUDO} gem install pkg/#{spec.name}-#{spec.version} --no-update-sources", :verbose => false
 end
+
+desc "Release new version"
+task :release => [:test, :sync_docs, :gem] do
+  require 'rubygems'
+  require 'rubyforge'
+  r = RubyForge.new
+  r.login
+  r.add_release spec.rubyforge_project,
+                spec.name,
+                spec.version,
+                File.join("pkg", "#{spec.name}-#{spec.version}.gem")
+end
