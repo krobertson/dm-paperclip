@@ -62,18 +62,16 @@ module Paperclip
         newvals = { :"#{@name}_file_name"    => uploaded_file['filename'],
                     :"#{@name}_content_type" => uploaded_file['content_type'],
                     :"#{@name}_file_size"    => uploaded_file['size'] }
-        @instance.update_attributes(newvals)
       else
         @queued_for_write[:original]          = uploaded_file.to_tempfile
         newvals = { :"#{@name}_file_name"    => uploaded_file.original_filename,
                     :"#{@name}_content_type" => uploaded_file.content_type,
                     :"#{@name}_file_size"    => uploaded_file.size }
-        @instance.update_attributes(newvals)
       end
-
-      @dirty = true
-
+      
       post_process
+      @dirty = true
+      @instance.update_attributes(newvals)
     ensure
       validate
     end
