@@ -4,7 +4,7 @@ require 'shoulda'
 require 'mocha'
 require 'tempfile'
 
-require 'data_mapper'
+require 'dm-core'
 require 'dm-validations'
 require 'dm-migrations'
 begin
