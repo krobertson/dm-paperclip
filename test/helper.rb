@@ -42,23 +42,6 @@ unless defined?(Mash)
 end
 
 def rebuild_model options = {}
-  DataMapper::Migration.new( 1, :drop_dummies_table ) do
-    up do
-      create_table :dummies do
-        column :id, "integer", true
-        column :other, "varchar(255)"
-        column :avatar_file_name, "varchar(255)"
-        column :avatar_content_type, "varchar(255)"
-        column :avatar_file_size, "integer"
-      end
-    end
-    down do
-      drop_table :dummies
-    end
-    perform_down
-    perform_up
-  end
-
   Object.send(:remove_const, "Dummy") rescue nil
   Object.const_set("Dummy", Class.new())
   Dummy.class_eval do
@@ -69,4 +52,5 @@ def rebuild_model options = {}
     property :other, String
     has_attached_file :avatar, options
   end
+  Dummy.auto_migrate!
 end

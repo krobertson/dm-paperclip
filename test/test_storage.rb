@@ -84,6 +84,7 @@ class StorageTest < Test::Unit::TestCase
           @bucket_mock.expects(:key).returns(@key_mock)
           @key_mock.expects(:data=)
           @key_mock.expects(:put)
+          @dummy.id = 1
           @dummy.save
         end
 

@@ -39,7 +39,7 @@ class IntegrationTest < Test::Unit::TestCase
         Dummy.class_eval do
           has_attached_file :avatar, :styles => { :thumb => "150x25#" }
         end
-        @d2 = Dummy[@dummy.id]
+        @d2 = Dummy.get(@dummy.id)
         @d2.avatar.reprocess!
         @d2.save
       end
@@ -122,7 +122,7 @@ class IntegrationTest < Test::Unit::TestCase
 
       saved_paths = [:thumb, :medium, :large, :original].collect{|s| @dummy.avatar.to_file(s).path }
 
-      @d2 = Dummy[@dummy.id]
+      @d2 = Dummy.get(@dummy.id)
       assert_equal "100x15", `identify -format "%wx%h" #{@d2.avatar.to_file.path}`.chomp
       assert_equal "434x66", `identify -format "%wx%h" #{@d2.avatar.to_file(:original).path}`.chomp
       assert_equal "300x46", `identify -format "%wx%h" #{@d2.avatar.to_file(:large).path}`.chomp
@@ -148,12 +148,12 @@ class IntegrationTest < Test::Unit::TestCase
         assert ! File.exists?(p)
       end
 
-      @d2 = Dummy[@dummy.id]
+      @d2 = Dummy.get(@dummy.id)
       assert_nil @d2.avatar_file_name
     end
 
     should "work exactly the same when new as when reloaded" do
-      @d2 = Dummy[@dummy.id]
+      @d2 = Dummy.get(@dummy.id)
 
       assert_equal @dummy.avatar_file_name, @d2.avatar_file_name
       [:thumb, :medium, :large, :original].each do |style|
@@ -184,7 +184,7 @@ class IntegrationTest < Test::Unit::TestCase
 
     should "know the difference between good files, bad files, not files, and nil when validating" do
       Dummy.validates_attachment_presence :avatar
-      @d2 = Dummy[@dummy.id]
+      @d2 = Dummy.get(@dummy.id)
       @d2.avatar = @file
       assert   @d2.valid?
       @d2.avatar = @bad_file
@@ -195,7 +195,7 @@ class IntegrationTest < Test::Unit::TestCase
 
     should "be able to reload without saving an not have the file disappear" do
       @dummy.avatar = @file
-      assert @dummy.save
+      @dummy.save
       @dummy.avatar = nil
       assert_nil @dummy.avatar_file_name
       @dummy.reload
@@ -247,7 +247,7 @@ class IntegrationTest < Test::Unit::TestCase
           assert_equal geo, `#{cmd}`.chomp, cmd
         end
 
-        @d2 = Dummy[@dummy.id]
+        @d2 = Dummy.get(@dummy.id)
         @d2_files = s3_files_for @d2.avatar
         [["434x66", :original],
          ["300x46", :large],
@@ -277,12 +277,12 @@ class IntegrationTest < Test::Unit::TestCase
           assert ! key.exists?
         end
 
-        @d2 = Dummy[@dummy.id]
+        @d2 = Dummy.get(@dummy.id)
         assert_nil @d2.avatar_file_name
       end
 
       should "work exactly the same when new as when reloaded" do
-        @d2 = Dummy[@dummy.id]
+        @d2 = Dummy.get(@dummy.id)
 
         assert_equal @dummy.avatar_file_name, @d2.avatar_file_name
         [:thumb, :medium, :large, :original].each do |style|
@@ -311,7 +311,7 @@ class IntegrationTest < Test::Unit::TestCase
         assert @dummy.valid?
 
         Dummy.validates_attachment_presence :avatar
-        @d2 = Dummy[@dummy.id]
+        @d2 = Dummy.get(@dummy.id)
         @d2.avatar = @file
         assert   @d2.valid?
         @d2.avatar = @bad_file

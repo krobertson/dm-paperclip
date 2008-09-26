@@ -140,10 +140,10 @@ class AttachmentTest < Test::Unit::TestCase
 
         context "and assigned a file" do
           setup do
-            @instance.expects(:update_attributes).with({ :test_file_name => nil,
+            @instance.expects(:attributes=).with({ :test_file_name => nil,
               :test_content_type => nil,
               :test_file_size => nil })
-            @instance.expects(:update_attributes).with(  { :test_file_name => File.basename(@file.path),
+            @instance.expects(:attributes=).with(  { :test_file_name => File.basename(@file.path),
                 :test_content_type => "image/png",
                 :test_file_size => @file.size })
             @attachment.assign(@file)
@@ -195,7 +195,7 @@ class AttachmentTest < Test::Unit::TestCase
                 @existing_names = @attachment.styles.keys.collect do |style|
                   @attachment.path(style)
                 end
-                @instance.expects(:update_attributes).with({ :test_file_name => nil,
+                @instance.expects(:attributes=).with({ :test_file_name => nil,
                   :test_content_type => nil,
                   :test_file_size => nil })
                 @attachment.assign nil

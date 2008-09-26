@@ -71,7 +71,7 @@ module Paperclip
       
       post_process
       @dirty = true
-      @instance.update_attributes(newvals)
+      @instance.attributes = newvals
     ensure
       validate
     end
@@ -250,7 +250,7 @@ module Paperclip
       newvals = { :"#{@name}_file_name"    => nil,
                   :"#{@name}_content_type" => nil,
                   :"#{@name}_file_size"    => nil }
-      @instance.update_attributes(newvals)
+      @instance.attributes = newvals
     end
 
     def flush_errors #:nodoc:
