@@ -239,7 +239,7 @@ module Paperclip
 
     def valid_assignment? file #:nodoc:
       return true if file.nil?
-      if(file.is_a?(File))
+      if(file.is_a?(File) || file.is_a?(Tempfile))
         (file.respond_to?(:original_filename) && file.respond_to?(:content_type))
       elsif(file.is_a?(Mash))
         (file.include?('tempfile') && file.include?('content_type') && file.include?('size') && file.include?('filename'))
