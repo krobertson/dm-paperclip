@@ -30,7 +30,7 @@ Rake::RDocTask.new(:doc) do |rdoc|
   rdoc.rdoc_dir = 'doc'
   rdoc.title    = 'DM-Paperclip'
   rdoc.options << '--line-numbers' << '--inline-source'
-  rdoc.rdoc_files.include('README.textile')
+  rdoc.rdoc_files.include('README.rdoc')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
  
@@ -55,11 +55,11 @@ spec = Gem::Specification.new do |s|
   s.name              = "dm-paperclip"
   s.version           = Paperclip::VERSION
   s.author            = "Ken Robertson"
-  s.email             = "ken@invalidlogic.com jyurek@thoughtbot.com"
+  s.email             = "ken@invalidlogic.com"
   s.homepage          = "http://invalidlogic.com/dm-paperclip/"
   s.platform          = Gem::Platform::RUBY
   s.summary           = "File attachments as attributes for DataMapper, based on the original Paperclip by Jon Yurek at Thoughtbot"
-  s.files             = FileList["README.textile",
+  s.files             = FileList["README.rdoc",
                                  "LICENSE",
                                  "Rakefile",
                                  "init.rb",
@@ -68,7 +68,7 @@ spec = Gem::Specification.new do |s|
   s.test_files        = FileList["test/**/test_*.rb"].to_a
   s.rubyforge_project = "dm-paperclip"
   s.has_rdoc          = true
-  s.extra_rdoc_files  = ["README.textile"]
+  s.extra_rdoc_files  = ["README.rdoc"]
   s.rdoc_options << '--line-numbers' << '--inline-source'
   s.requirements << "ImageMagick"
   s.requirements << "data_mapper"

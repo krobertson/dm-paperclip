@@ -37,7 +37,7 @@ require File.join(File.dirname(__FILE__), 'dm-paperclip', 'attachment')
 require File.join(File.dirname(__FILE__), 'dm-paperclip', 'validations') unless defined?(DataMapper::Validate).nil?
 
 module Paperclip
-  VERSION = "2.1.2.1"
+  VERSION = "2.1.4"
   class << self
     # Provides configurability to Paperclip. There are a number of options available, such as:
     # * whiny_thumbnails: Will raise an error if Paperclip cannot process thumbnails of 

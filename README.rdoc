@@ -1,4 +1,4 @@
-h1. DataMapper Paperclip
+=DataMapper Paperclip
 
 DM-Paperclip is a port of Thoughtbot's Paperclip plugin to work with DataMapper 0.9.  This plugin is fully compatible with
 the original ActiveRecord-oriented Paperclip.  You could take an existing ActiveRecord database and use it with DataMapper.
@@ -14,7 +14,7 @@ It processes the thumbnails through the command-line applications instead of usi
 
 See the documentation for the +has_attached_file+ method for options.
 
-h2. Code
+==Code
 
 The code DM-Paperclip is available at Github:
 
@@ -27,7 +27,7 @@ packaged as a gem through Rubyforge:
 
   sudo gem install dm-paperclip
 
-h2. Usage
+==Usage
 
 In your model:
 
@@ -41,8 +41,9 @@ In your model:
                                    :thumb => "100x100>" }
   end
 
-Your database will need to add three columns, +avatar_file_name+ (varchar), +avatar_content_type+ (varchar), and
-+avatar_file_size+ (integer).  You can either add these manually, auto-migrate, or use the following migration:
+Your database will need to add four columns, avatar_file_name (varchar), avatar_content_type (varchar), and
+avatar_file_size (integer), and avatar_updated_at (datetime).  You can either add these manually, auto-
+migrate, or use the following migration:
 
   migration( 1, :add_user_paperclip_fields ) do
   up do
@@ -50,11 +51,12 @@ Your database will need to add three columns, +avatar_file_name+ (varchar), +ava
         add_column :avatar_file_name, "varchar(255)"
         add_column :avatar_content_type, "varchar(255)"
         add_column :avatar_file_size, "integer"
+        add_column :avatar_updated_at, "datetime"
       end
     end
     down do
       modify_table :users do
-        drop_columns :avatar_file_name, :avatar_content_type, :avatar_file_size
+        drop_columns :avatar_file_name, :avatar_content_type, :avatar_file_size, :avatar_updated_at
       end
     end
   end
