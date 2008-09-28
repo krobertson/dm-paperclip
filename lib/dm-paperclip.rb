@@ -106,19 +106,28 @@ module Paperclip
     #     has_attached_file :avatar, :styles => { :normal => "100x100#" },
     #                       :default_style => :normal
     #     user.avatar.url # => "/avatars/23/normal_me.png"
-    # * +path+: The location of the repository of attachments on disk. This can be coordinated
-    #   with the value of the +url+ option to allow files to be saved into a place where Apache
-    #   can serve them without hitting your app. Defaults to 
-    #   ":merb_root/public/:class/:attachment/:id/:style_:filename". 
-    #   By default this places the files in the app's public directory which can be served 
-    #   directly. If you are using capistrano for deployment, a good idea would be to 
-    #   make a symlink to the capistrano-created system directory from inside your app's 
-    #   public directory.
-    #   See Paperclip::Attachment#interpolate for more information on variable interpolaton.
-    #     :path => "/var/app/attachments/:class/:id/:style/:filename"
     # * +whiny_thumbnails+: Will raise an error if Paperclip cannot process thumbnails of an
     #   uploaded image. This will ovrride the global setting for this attachment. 
     #   Defaults to true. 
+    # * +convert_options+: When creating thumbnails, use this free-form options
+    #   field to pass in various convert command options.  Typical options are "-strip" to
+    #   remove all Exif data from the image (save space for thumbnails and avatars) or
+    #   "-depth 8" to specify the bit depth of the resulting conversion.  See ImageMagick
+    #   convert documentation for more options: (http://www.imagemagick.org/script/convert.php)
+    #   Note that this option takes a hash of options, each of which correspond to the style
+    #   of thumbnail being generated. You can also specify :all as a key, which will apply
+    #   to all of the thumbnails being generated. If you specify options for the :original,
+    #   it would be best if you did not specify destructive options, as the intent of keeping
+    #   the original around is to regenerate all the thumbnails then requirements change.
+    #     has_attached_file :avatar, :styles => { :large => "300x300", :negative => "100x100" }
+    #                                :convert_options => {
+    #                                  :all => "-strip",
+    #                                  :negative => "-negate"
+    #                                }
+    # * +storage+: Chooses the storage backend where the files will be stored. The current
+    #   choices are :filesystem and :s3. The default is :filesystem. Make sure you read the
+    #   documentation for Paperclip::Storage::Filesystem and Paperclip::Storage::S3
+    #   for backend-specific options.
     def has_attached_file name, options = {}
       include InstanceMethods
 
@@ -130,6 +139,7 @@ module Paperclip
       property "#{name}_file_name".to_sym, String, property_options
       property "#{name}_content_type".to_sym, String, property_options
       property "#{name}_file_size".to_sym, Integer, property_options
+      property "#{name}_updated_at".to_sym, DateTime, property_options
 
       after :save, :save_attached_files
       before :destroy, :destroy_attached_files
@@ -207,12 +217,14 @@ module Paperclip
     end
 
     def save_attached_files
+      #logger.info("[paperclip] Saving attachments.")
       each_attachment do |name, attachment|
         attachment.send(:save)
       end
     end
 
     def destroy_attached_files
+      #logger.info("[paperclip] Deleting attachments.")
       each_attachment do |name, attachment|
         attachment.send(:queue_existing_for_delete)
         attachment.send(:flush_deletes)

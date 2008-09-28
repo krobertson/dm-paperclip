@@ -14,7 +14,7 @@ task :default => [:clean, :test]
 desc 'Test the DM-Paperclip library.'
 Rake::TestTask.new(:test) do |t|
   t.libs << 'dm-paperclip'
-  t.pattern = 'test/**/test_*.rb'
+  t.pattern = 'test/**/*_test.rb'
   t.verbose = true
 end
 

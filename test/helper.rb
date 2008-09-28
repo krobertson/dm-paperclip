@@ -15,6 +15,7 @@ end
 
 ROOT       = File.join(File.dirname(__FILE__), '..')
 RAILS_ROOT = ROOT
+RAILS_ENV  = ENV['RAILS_ENV']
 
 Object.const_set("Merb", Class.new())
 Merb.class_eval do
@@ -53,4 +54,11 @@ def rebuild_model options = {}
     has_attached_file :avatar, options
   end
   Dummy.auto_migrate!
+end
+
+def temporary_env(new_env)
+  old_env = defined?(RAILS_ENV) ? RAILS_ENV : nil
+  Object.const_set("RAILS_ENV", new_env)
+  yield
+  Object.const_set("RAILS_ENV", old_env)
 end
