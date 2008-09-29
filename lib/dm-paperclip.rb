@@ -66,12 +66,21 @@ module Paperclip
 
   module Resource
     def self.included(base)
+      base.class_eval <<-RUBY, __FILE__, __LINE__ + 1
+        class_variable_set(:@@attachment_definitions,nil) unless class_variable_defined?(:@@attachment_definitions)
+        def self.attachment_definitions
+          @@attachment_definitions
+        end
+
+        def self.attachment_definitions=(obj)
+          @@attachment_definitions = obj
+        end
+      RUBY
       base.extend Paperclip::ClassMethods
     end
   end
 
   module ClassMethods
-    @@attachment_definitions = {}
 
     # +has_attached_file+ gives the class it is called on an attribute that maps to a file. This
     # is typically a file stored somewhere on the filesystem and has been uploaded by a user. 
@@ -131,8 +140,8 @@ module Paperclip
     def has_attached_file name, options = {}
       include InstanceMethods
 
-      @@attachment_definitions = {} if @@attachment_definitions.nil?
-      @@attachment_definitions[name] = {:validations => []}.merge(options)
+      self.attachment_definitions = {} if self.attachment_definitions.nil?
+      self.attachment_definitions[name] = {:validations => []}.merge(options)
       
       property_options = options.delete_if { |k,v| ![ :public, :protected, :private, :accessor, :reader, :writer ].include?(key) }
 
@@ -177,7 +186,7 @@ module Paperclip
 
     # Adds errors if thumbnail creation fails. The same as specifying :whiny_thumbnails => true.
     def validates_attachment_thumbnails name, options = {}
-      @@attachment_definitions[name][:whiny_thumbnails] = true
+      self.attachment_definitions[name][:whiny_thumbnails] = true
     end
 
     # Places ActiveRecord-style validations on the presence of a file.
@@ -195,11 +204,6 @@ module Paperclip
       add_validator_to_context(opts, fields, Paperclip::Validate::ContentTypeValidator)
     end
 
-    end
-
-    # Returns the attachment definitions defined by each call to has_attached_file.
-    def attachment_definitions
-      @@attachment_definitions
     end
 
   end
