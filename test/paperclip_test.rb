@@ -1,7 +1,7 @@
 require 'test/helper.rb'
 
 class PaperclipTest < Test::Unit::TestCase
-  context "An ActiveRecord model with an 'avatar' attachment" do
+  context "A DataMapper model with an 'avatar' attachment" do
     setup do
       rebuild_model :path => "tmp/:class/omg/:style.:extension"
       @file = File.new(File.join(FIXTURES_DIR, "5k.png"))
