@@ -15,6 +15,21 @@ class PaperclipTest < Test::Unit::TestCase
       end
     end
 
+    should "handle multiple classes using attachments" do
+      Object.const_set("DummyTwo", Class.new())
+      DummyTwo.class_eval do
+        include DataMapper::Resource
+        include DataMapper::Validate
+        include Paperclip::Resource
+        property :id, Integer, :serial => true
+        property :other, String
+        has_attached_file :file
+      end
+      
+      assert_equal [:file], DummyTwo.attachment_definitions.keys
+      assert_equal [:avatar], Dummy.attachment_definitions.keys
+    end
+
     context "that is write protected" do
       setup do
         Dummy.class_eval do
