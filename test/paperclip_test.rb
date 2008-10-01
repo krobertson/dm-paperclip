@@ -28,6 +28,10 @@ class PaperclipTest < Test::Unit::TestCase
       
       assert_equal [:file], DummyTwo.attachment_definitions.keys
       assert_equal [:avatar], Dummy.attachment_definitions.keys
+
+      Object.send(:remove_const, "DummyTwo") rescue nil
+
+      assert_equal [:avatar], Dummy.attachment_definitions.keys
     end
 
     context "that is write protected" do
