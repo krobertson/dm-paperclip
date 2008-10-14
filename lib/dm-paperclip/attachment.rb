@@ -87,8 +87,11 @@ module Paperclip
       @dirty = true
 
       # Reset the file size if the original file was reprocessed.
-      newvals[:"#{@name}_file_size"] = uploaded_file.size.to_i
-      
+      #newvals[:"#{@name}_file_size"] = uploaded_file.size.to_i
+      if @styles[:original]
+        newvals[:"#{@name}_file_size"] = @queued_for_write[:original].size
+      end
+
       begin
         @instance.attributes = newvals
       rescue NameError
