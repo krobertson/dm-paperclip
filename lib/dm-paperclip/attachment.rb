@@ -89,7 +89,7 @@ module Paperclip
       # Reset the file size if the original file was reprocessed.
       #newvals[:"#{@name}_file_size"] = uploaded_file.size.to_i
       if @styles[:original]
-        newvals[:"#{@name}_file_size"] = @queued_for_write[:original].size
+        newvals[:"#{@name}_file_size"] = @queued_for_write[:original].size.to_i
       end
 
       begin
