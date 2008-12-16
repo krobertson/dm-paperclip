@@ -71,13 +71,13 @@ module Paperclip
       newvals = {}
       if uploaded_file.is_a?(Mash)
         @queued_for_write[:original]          = uploaded_file['tempfile']
-        newvals = { :"#{@name}_file_name"    => uploaded_file['filename'].strip.gsub(/[^\w\d\.\-]+/, '_'),
+        newvals = { :"#{@name}_file_name"    => uploaded_file['filename'].strip.gsub(/[^\w\d\.\-]+/, '_')[/[^\\]+$/],
                     :"#{@name}_content_type" => uploaded_file['content_type'].strip,
                     :"#{@name}_file_size"    => uploaded_file['size'],
                     :"#{@name}_updated_at"   => Time.now }
       else
         @queued_for_write[:original]          = uploaded_file.to_tempfile
-        newvals = { :"#{@name}_file_name"    => uploaded_file.original_filename.strip.gsub(/[^\w\d\.\-]+/, '_'),
+        newvals = { :"#{@name}_file_name"    => uploaded_file.original_filename.strip.gsub(/[^\w\d\.\-]+/, '_')[/[^\\]+$/],
                     :"#{@name}_content_type" => uploaded_file.content_type.strip,
                     :"#{@name}_file_size"    => uploaded_file.size,
                     :"#{@name}_updated_at"   => Time.now }
