@@ -26,62 +26,134 @@
 # See the +has_attached_file+ documentation for more details.
 
 require 'tempfile'
-require File.join(File.dirname(__FILE__), 'dm-paperclip', 'upfile')
-require File.join(File.dirname(__FILE__), 'dm-paperclip', 'iostream')
-require File.join(File.dirname(__FILE__), 'dm-paperclip', 'geometry')
-require File.join(File.dirname(__FILE__), 'dm-paperclip', 'thumbnail')
-require File.join(File.dirname(__FILE__), 'dm-paperclip', 'storage')
-require File.join(File.dirname(__FILE__), 'dm-paperclip', 'attachment')
+require 'dm-paperclip/upfile'
+require 'dm-paperclip/iostream'
+require 'dm-paperclip/geometry'
+require 'dm-paperclip/processor'
+require 'dm-paperclip/thumbnail'
+require 'dm-paperclip/storage'
+require 'dm-paperclip/interpolations'
+require 'dm-paperclip/attachment'
+if defined? RAILS_ROOT
+  Dir.glob(File.join(File.expand_path(RAILS_ROOT), "lib", "paperclip_processors", "*.rb")).each do |processor|
+    require processor
+  end
+end
 
 # Only include validations if dm-validations is loaded
-require File.join(File.dirname(__FILE__), 'dm-paperclip', 'validations') unless defined?(DataMapper::Validate).nil?
+require 'dm-paperclip/validations') unless defined?(DataMapper::Validate).nil?
 
+# The base module that gets included in ActiveRecord::Base. See the
+# documentation for Paperclip::ClassMethods for more useful information.
 module Paperclip
-  VERSION = "2.1.4"
+
+  VERSION = "2.2.9.1"
+
   class << self
     # Provides configurability to Paperclip. There are a number of options available, such as:
-    # * whiny_thumbnails: Will raise an error if Paperclip cannot process thumbnails of 
+    # * whiny: Will raise an error if Paperclip cannot process thumbnails of 
     #   an uploaded image. Defaults to true.
-    # * image_magick_path: Defines the path at which to find the +convert+ and +identify+ 
+    # * log: Logs progress to the Rails log. Uses ActiveRecord's logger, so honors
+    #   log levels, etc. Defaults to true.
+    # * command_path: Defines the path at which to find the command line
     #   programs if they are not visible to Rails the system's search path. Defaults to 
-    #   nil, which uses the first executable found in the search path.
+    #   nil, which uses the first executable found in the user's search path.
+    # * image_magick_path: Deprecated alias of command_path.
     def options
       @options ||= {
-        :whiny_thumbnails  => true,
-        :image_magick_path => nil
+        :whiny             => true,
+        :image_magick_path => nil,
+        :command_path      => nil,
+        :log               => true,
+        :log_command       => false,
+        :swallow_stderr    => true
       }
     end
 
     def path_for_command command #:nodoc:
-      path = [options[:image_magick_path], command].compact
+      if options[:image_magick_path]
+        warn("[DEPRECATION] :image_magick_path is deprecated and will be removed. Use :command_path instead")
+      end
+      path = [options[:command_path] || options[:image_magick_path], command].compact
       File.join(*path)
+    end
+
+    def interpolates key, &block
+      Paperclip::Interpolations[key] = block
+    end
+
+    # The run method takes a command to execute and a string of parameters
+    # that get passed to it. The command is prefixed with the :command_path
+    # option from Paperclip.options. If you have many commands to run and
+    # they are in different paths, the suggested course of action is to
+    # symlink them so they are all in the same directory.
+    #
+    # If the command returns with a result code that is not one of the
+    # expected_outcodes, a PaperclipCommandLineError will be raised. Generally
+    # a code of 0 is expected, but a list of codes may be passed if necessary.
+    #
+    # This method can log the command being run when 
+    # Paperclip.options[:log_command] is set to true (defaults to false). This
+    # will only log if logging in general is set to true as well.
+    def run cmd, params = "", expected_outcodes = 0
+      command = %Q<#{%Q[#{path_for_command(cmd)} #{params}].gsub(/\s+/, " ")}>
+      command = "#{command} 2>#{bit_bucket}" if Paperclip.options[:swallow_stderr]
+      Paperclip.log(command) if Paperclip.options[:log_command]
+      output = `#{command}`
+      unless [expected_outcodes].flatten.include?($?.exitstatus)
+        raise PaperclipCommandLineError, "Error while running #{cmd}"
+      end
+      output
+    end
+
+    def bit_bucket #:nodoc:
+      File.exists?("/dev/null") ? "/dev/null" : "NUL"
+    end
+
+    def included base #:nodoc:
+      base.extend ClassMethods
+      unless base.respond_to?(:define_callbacks)
+        base.send(:include, Paperclip::CallbackCompatability)
+      end
+    end
+
+    def processor name #:nodoc:
+      name = name.to_s.camelize
+      processor = Paperclip.const_get(name)
+      unless processor.ancestors.include?(Paperclip::Processor)
+        raise PaperclipError.new("Processor #{name} was not found") 
+      end
+      processor
+    end
+
+    # Log a paperclip-specific line. Uses ActiveRecord::Base.logger
+    # by default. Set Paperclip.options[:log] to false to turn off.
+    def log message
+      logger.info("[paperclip] #{message}") if logging?
+    end
+
+    def logger #:nodoc:
+      DataMapper.logger
+    end
+
+    def logging? #:nodoc:
+      options[:log]
     end
   end
 
   class PaperclipError < StandardError #:nodoc:
   end
 
-  class NotIdentifiedByImageMagickError < PaperclipError #:nodoc:
+  class PaperclipCommandLineError < StandardError #:nodoc:
   end
 
-  module Resource
-    def self.included(base)
-      base.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        class_variable_set(:@@attachment_definitions,nil) unless class_variable_defined?(:@@attachment_definitions)
-        def self.attachment_definitions
-          @@attachment_definitions
-        end
-
-        def self.attachment_definitions=(obj)
-          @@attachment_definitions = obj
-        end
-      RUBY
-      base.extend Paperclip::ClassMethods
-    end
+  class NotIdentifiedByImageMagickError < PaperclipError #:nodoc:
+  end
+  
+  class InfiniteInterpolationError < PaperclipError #:nodoc:
   end
 
   module ClassMethods
-
     # +has_attached_file+ gives the class it is called on an attribute that maps to a file. This
     # is typically a file stored somewhere on the filesystem and has been uploaded by a user. 
     # The attribute returns a Paperclip::Attachment object which handles the management of
@@ -145,13 +217,16 @@ module Paperclip
       
       property_options = options.delete_if { |k,v| ![ :public, :protected, :private, :accessor, :reader, :writer ].include?(key) }
 
-      property "#{name}_file_name".to_sym, String, property_options
-      property "#{name}_content_type".to_sym, String, property_options
-      property "#{name}_file_size".to_sym, Integer, property_options
-      property "#{name}_updated_at".to_sym, DateTime, property_options
+      property "#{name}_file_name".to_sym,    String,   property_options
+      property "#{name}_content_type".to_sym, String,   property_options
+      property "#{name}_file_size".to_sym,    Integer,  property_options
+      property "#{name}_updated_at".to_sym,   DateTime, property_options
 
       after :save, :save_attached_files
       before :destroy, :destroy_attached_files
+      
+      define_callbacks :before_post_process, :after_post_process
+      define_callbacks :"before_#{name}_post_process", :"after_#{name}_post_process"
 
       define_method name do |*args|
         a = attachment_for(name)
@@ -172,40 +247,43 @@ module Paperclip
     end
 
     unless defined?(DataMapper::Validate).nil?
+      # Places ActiveRecord-style validations on the size of the file assigned. The
+      # possible options are:
+      # * +in+: a Range of bytes (i.e. +1..1.megabyte+),
+      # * +less_than+: equivalent to :in => 0..options[:less_than]
+      # * +greater_than+: equivalent to :in => options[:greater_than]..Infinity
+      # * +message+: error message to display, use :min and :max as replacements
+      def validates_attachment_size(*fields)
+        opts = opts_from_validator_args(fields)
+        add_validator_to_context(opts, fields, Paperclip::Validate::SizeValidator)
+      end
 
-    # Places ActiveRecord-style validations on the size of the file assigned. The
-    # possible options are:
-    # * +in+: a Range of bytes (i.e. +1..1.megabyte+),
-    # * +less_than+: equivalent to :in => 0..options[:less_than]
-    # * +greater_than+: equivalent to :in => options[:greater_than]..Infinity
-    # * +message+: error message to display, use :min and :max as replacements
-    def validates_attachment_size(*fields)
-      opts = opts_from_validator_args(fields)
-      add_validator_to_context(opts, fields, Paperclip::Validate::SizeValidator)
-    end
+      # Adds errors if thumbnail creation fails. The same as specifying :whiny_thumbnails => true.
+      def validates_attachment_thumbnails name, options = {}
+        self.attachment_definitions[name][:whiny_thumbnails] = true
+      end
 
-    # Adds errors if thumbnail creation fails. The same as specifying :whiny_thumbnails => true.
-    def validates_attachment_thumbnails name, options = {}
-      self.attachment_definitions[name][:whiny_thumbnails] = true
-    end
-
-    # Places ActiveRecord-style validations on the presence of a file.
-    def validates_attachment_presence(*fields)
-      opts = opts_from_validator_args(fields)
-      add_validator_to_context(opts, fields, Paperclip::Validate::RequiredFieldValidator)
+      # Places ActiveRecord-style validations on the presence of a file.
+      def validates_attachment_presence(*fields)
+        opts = opts_from_validator_args(fields)
+        add_validator_to_context(opts, fields, Paperclip::Validate::RequiredFieldValidator)
+      end
+    
+      # Places ActiveRecord-style validations on the content type of the file assigned. The
+      # possible options are:
+      # * +content_type+: Allowed content types.  Can be a single content type or an array.  Allows all by default.
+      # * +message+: The message to display when the uploaded file has an invalid content type.
+      def validates_attachment_content_type(*fields)
+        opts = opts_from_validator_args(fields)
+        add_validator_to_context(opts, fields, Paperclip::Validate::ContentTypeValidator)
+      end
     end
     
-    # Places ActiveRecord-style validations on the content type of the file assigned. The
-    # possible options are:
-    # * +content_type+: Allowed content types.  Can be a single content type or an array.  Allows all by default.
-    # * +message+: The message to display when the uploaded file has an invalid content type.
-    def validates_attachment_content_type(*fields)
-      opts = opts_from_validator_args(fields)
-      add_validator_to_context(opts, fields, Paperclip::Validate::ContentTypeValidator)
+    # Returns the attachment definitions defined by each call to
+    # has_attached_file.
+    def attachment_definitions
+      read_inheritable_attribute(:attachment_definitions)
     end
-
-    end
-
   end
 
   module InstanceMethods #:nodoc:
@@ -221,21 +299,18 @@ module Paperclip
     end
 
     def save_attached_files
-      #logger.info("[paperclip] Saving attachments.")
+      logger.info("[paperclip] Saving attachments.")
       each_attachment do |name, attachment|
         attachment.send(:save)
       end
     end
 
     def destroy_attached_files
-      #logger.info("[paperclip] Deleting attachments.")
+      logger.info("[paperclip] Deleting attachments.")
       each_attachment do |name, attachment|
         attachment.send(:queue_existing_for_delete)
         attachment.send(:flush_deletes)
       end
     end
   end
-
 end
-
-File.send(:include, Paperclip::Upfile)
