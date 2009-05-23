@@ -41,7 +41,7 @@ if defined? RAILS_ROOT
 end
 
 # Only include validations if dm-validations is loaded
-require 'dm-paperclip/validations') unless defined?(DataMapper::Validate).nil?
+require 'dm-paperclip/validations' unless defined?(DataMapper::Validate).nil?
 
 # The base module that gets included in ActiveRecord::Base. See the
 # documentation for Paperclip::ClassMethods for more useful information.
@@ -152,6 +152,22 @@ module Paperclip
   
   class InfiniteInterpolationError < PaperclipError #:nodoc:
   end
+  
+  module Resource
+    def self.included(base)
+      base.class_eval <<-RUBY, __FILE__, __LINE__ + 1
+        class_variable_set(:@@attachment_definitions,nil) unless class_variable_defined?(:@@attachment_definitions)
+        def self.attachment_definitions
+          @@attachment_definitions
+        end
+
+        def self.attachment_definitions=(obj)
+          @@attachment_definitions = obj
+        end
+      RUBY
+      base.extend Paperclip::ClassMethods
+    end
+  end
 
   module ClassMethods
     # +has_attached_file+ gives the class it is called on an attribute that maps to a file. This
@@ -217,16 +233,17 @@ module Paperclip
       
       property_options = options.delete_if { |k,v| ![ :public, :protected, :private, :accessor, :reader, :writer ].include?(key) }
 
-      property "#{name}_file_name".to_sym,    String,   property_options
-      property "#{name}_content_type".to_sym, String,   property_options
-      property "#{name}_file_size".to_sym,    Integer,  property_options
-      property "#{name}_updated_at".to_sym,   DateTime, property_options
+      property :"#{name}_file_name",    String,   property_options
+      property :"#{name}_content_type", String,   property_options
+      property :"#{name}_file_size",    Integer,  property_options
+      property :"#{name}_updated_at",   DateTime, property_options
 
       after :save, :save_attached_files
       before :destroy, :destroy_attached_files
       
-      define_callbacks :before_post_process, :after_post_process
-      define_callbacks :"before_#{name}_post_process", :"after_#{name}_post_process"
+      # not needed with extlib just do before :post_process, or after :post_process
+      # define_callbacks :before_post_process, :after_post_process
+      # define_callbacks :"before_#{name}_post_process", :"after_#{name}_post_process"
 
       define_method name do |*args|
         a = attachment_for(name)
