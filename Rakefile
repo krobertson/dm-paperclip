@@ -4,6 +4,7 @@ require 'rake/rdoctask'
 require 'rake/gempackagetask'
 
 $LOAD_PATH << File.join(File.dirname(__FILE__), 'lib')
+require 'dm-core'
 require 'dm-validations'
 require 'dm-paperclip'
 
