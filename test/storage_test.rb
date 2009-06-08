@@ -24,21 +24,21 @@ class StorageTest < Test::Unit::TestCase
 
     should "get the correct credentials when RAILS_ENV is production" do
       ENV['RAILS_ENV'] = 'production'
-      assert_equal({:key => "12345"},
+      assert_equal({'key' => "12345"},
                    @avatar.parse_credentials('production' => {:key => '12345'},
                                              :development => {:key => "54321"}))
     end
 
     should "get the correct credentials when RAILS_ENV is development" do
       ENV['RAILS_ENV'] = 'development'
-      assert_equal({:key => "54321"},
+      assert_equal({'key' => "54321"},
                    @avatar.parse_credentials('production' => {:key => '12345'},
                                              :development => {:key => "54321"}))
     end
 
     should "return the argument if the key does not exist" do
       ENV['RAILS_ENV'] = "not really an env"
-      assert_equal({:test => "12345"}, @avatar.parse_credentials(:test => "12345"))
+      assert_equal({'test' => "12345"}, @avatar.parse_credentials(:test => "12345"))
     end
   end
 

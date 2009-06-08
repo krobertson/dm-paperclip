@@ -121,7 +121,7 @@ module Paperclip
       name = name.to_s.camel_case
       processor = Paperclip.const_get(name)
       unless processor.ancestors.include?(Paperclip::Processor)
-        raise PaperclipError.new("Processor #{name} was not found") 
+        raise PaperclipError.new("Processor #{name} was not found")
       end
       processor
     end
@@ -308,7 +308,7 @@ module Paperclip
       @attachments ||= {}
       @attachments[name] ||= Attachment.new(name, self, self.class.attachment_definitions[name])
     end
-    
+
     def each_attachment
       self.class.attachment_definitions.each do |name, definition|
         yield(name, attachment_for(name))

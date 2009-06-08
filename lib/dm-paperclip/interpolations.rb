@@ -61,10 +61,18 @@ module Paperclip
       RAILS_ENV
     end
 
-    # Returns the underscored, pluralized version of the class name.
+    def merb_root attachment, style
+      Merb.root
+    end
+
+    def merb_env attachment, style
+      Merb.env
+    end
+
+    # Returns the snake cased, pluralized version of the class name.
     # e.g. "users" for the User class.
     def class attachment, style
-      attachment.instance.class.to_s.underscore.pluralize
+      attachment.instance.class.to_s.snake_case.pluralize
     end
 
     # Returns the basename of the file. e.g. "file" for "file.jpg"
@@ -75,7 +83,7 @@ module Paperclip
     # Returns the extension of the file. e.g. "jpg" for "file.jpg"
     # If the style has a format defined, it will return the format instead
     # of the actual extension.
-    def extension attachment, style 
+    def extension attachment, style
       ((style = attachment.styles[style]) && style[:format]) ||
         File.extname(attachment.original_filename).gsub(/^\.+/, "")
     end

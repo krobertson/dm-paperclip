@@ -3,7 +3,7 @@ module Paperclip
   # when the model saves, deletes when the model is destroyed, and processes
   # the file upon assignment.
   class Attachment
-    
+
     def self.default_options
       @default_options ||= {
         :url           => "/system/:attachment/:id/:style/:filename",
@@ -56,7 +56,7 @@ module Paperclip
     # errors, assigns attributes, processes the file, and runs validations. It
     # also queues up the previous file for deletion, to be flushed away on
     # #save of its host.  In addition to form uploads, you can also assign
-    # another Paperclip attachment: 
+    # another Paperclip attachment:
     #   new_user.avatar = old_user.avatar
     # If the file that is assigned is not valid, the processing (i.e.
     # thumbnailing, etc) will NOT be run.
@@ -84,7 +84,7 @@ module Paperclip
       @dirty = true
 
       post_process if valid?
- 
+
       # Reset the file size if the original file was reprocessed.
       instance_write(:file_size, @queued_for_write[:original].size.to_i)
     ensure
@@ -100,8 +100,8 @@ module Paperclip
     # include_updated_timestamp to false if you want to stop the attachment
     # update time appended to the url
     def url style = default_style, include_updated_timestamp = true
-      url = original_filename.nil? ? interpolate(@default_url, style) : interpolate(@url, style)
-      include_updated_timestamp && updated_at ? [url, updated_at].compact.join(url.include?("?") ? "&" : "?") : url
+      the_url = original_filename.nil? ? interpolate(@default_url, style) : interpolate(@url, style)
+      include_updated_timestamp && updated_at ? [the_url, updated_at].compact.join(the_url.include?("?") ? "&" : "?") : the_url
     end
 
     # Returns the path of the attachment as defined by the :path option. If the
@@ -181,8 +181,8 @@ module Paperclip
     def content_type
       instance_read(:content_type)
     end
-    
-    # Returns the last modified time of the file as originally assigned, and 
+
+    # Returns the last modified time of the file as originally assigned, and
     # lives in the <attachment>_updated_at attribute of the model.
     def updated_at
       instance_read(:updated_at)
@@ -221,7 +221,7 @@ module Paperclip
         true
       end
     end
-    
+
     # Returns true if a file has been assigned.
     def file?
       !original_filename.blank?
