@@ -118,7 +118,7 @@ module Paperclip
     end
 
     def processor name #:nodoc:
-      name = name.to_s.camelize
+      name = name.to_s.camel_case
       processor = Paperclip.const_get(name)
       unless processor.ancestors.include?(Paperclip::Processor)
         raise PaperclipError.new("Processor #{name} was not found") 
