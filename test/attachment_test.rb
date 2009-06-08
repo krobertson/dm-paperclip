@@ -138,11 +138,9 @@ class AttachmentTest < Test::Unit::TestCase
         end
       end
 
-      [:thumb, :large].each do |style|
-        should "call extra_options_for(#{style})" do
-          @dummy.avatar.expects(:extra_options_for).with(style)
-          @dummy.avatar = @file
-        end
+      should "call post_process" do
+        @dummy.avatar.expects(:post_process).once
+        @dummy.avatar = @file
       end
     end
   end
@@ -150,20 +148,20 @@ class AttachmentTest < Test::Unit::TestCase
   context "Assigning an attachment" do
     setup do
       rebuild_model
-      
+
       @not_file = mock
       @not_file.stubs(:nil?).returns(false)
       @not_file.expects(:to_tempfile).returns(self)
       @not_file.expects(:original_filename).returns("filename.png\r\n")
       @not_file.expects(:content_type).returns("image/png\r\n")
       @not_file.expects(:size).returns(10)
-      
+
       @dummy = Dummy.new
       @attachment = @dummy.avatar
       @attachment.expects(:valid_assignment?).with(@not_file).returns(true)
       @attachment.expects(:queue_existing_for_delete)
       @attachment.expects(:post_process)
-      @attachment.expects(:validate)
+      @attachment.expects(:validate).twice
       @dummy.avatar = @not_file
     end
 
@@ -174,33 +172,31 @@ class AttachmentTest < Test::Unit::TestCase
     should "strip whitespace from content_type field" do
       assert_equal "image/png", @dummy.avatar.instance.avatar_content_type
     end
-    
   end
 
   context "Attachment with strange letters" do
     setup do
       rebuild_model
-      
+
       @not_file = mock
       @not_file.stubs(:nil?).returns(false)
       @not_file.expects(:to_tempfile).returns(self)
       @not_file.expects(:original_filename).returns("sheep_say_bæ.png\r\n")
       @not_file.expects(:content_type).returns("image/png\r\n")
       @not_file.expects(:size).returns(10)
-      
+
       @dummy = Dummy.new
       @attachment = @dummy.avatar
       @attachment.expects(:valid_assignment?).with(@not_file).returns(true)
       @attachment.expects(:queue_existing_for_delete)
       @attachment.expects(:post_process)
-      @attachment.expects(:validate)
+      @attachment.expects(:validate).twice
       @dummy.avatar = @not_file
     end
-    
+
     should "remove strange letters and replace with underscore (_)" do
       assert_equal "sheep_say_b_.png", @dummy.avatar.original_filename
     end
-    
   end
 
   context "An attachment" do
@@ -230,25 +226,24 @@ class AttachmentTest < Test::Unit::TestCase
       assert_equal "/avatars/original/missing.png", @attachment.url
       assert_equal "/avatars/blah/missing.png", @attachment.url(:blah)
     end
-    
+
     context "with a file assigned in the database" do
       setup do
         @instance.stubs(:attribute_get).with(:avatar_file_name).returns('5k.png')
         @instance.stubs(:attribute_get).with(:avatar_content_type).returns("image/png")
         @instance.stubs(:attribute_get).with(:avatar_file_size).returns(12345)
-        now = Time.now
-        Time.stubs(:now).returns(now)
+        @now = Time.now
+        Time.stubs(:now).returns(@now)
         @instance.stubs(:attribute_get).with(:avatar_updated_at).returns(Time.now)
       end
 
       should "return a correct url even if the file does not exist" do
         assert_nil @attachment.to_file
-        assert_match %r{^/avatars/#{@instance.id}/blah/5k\.png}, @attachment.url(:blah)
+        assert_match %r{^/system/avatars/#{@instance.id}/blah/5k\.png}, @attachment.url(:blah)
       end
 
       should "make sure the updated_at mtime is in the url if it is defined" do
-        time = Time.now
-        assert_match %r{#{time.year}#{time.month}#{time.day}#{time.hour}#{time.min}#{time.sec}$}, @attachment.url(:blah)
+        assert_match %r{#{@now.to_i.to_s}$}, @attachment.url(:blah)
       end
 
       context "with the updated_at field removed" do
@@ -298,8 +293,8 @@ class AttachmentTest < Test::Unit::TestCase
 
             should "return the real url" do
               assert @attachment.to_file
-              assert_match %r{^/avatars/#{@instance.id}/original/5k\.png}, @attachment.url
-              assert_match %r{^/avatars/#{@instance.id}/small/5k\.jpg}, @attachment.url(:small)
+              assert_match %r{^/system/avatars/#{@instance.id}/original/5k\.png}, @attachment.url
+              assert_match %r{^/system/avatars/#{@instance.id}/small/5k\.jpg}, @attachment.url(:small)
             end
 
             should "commit the files to disk" do
@@ -341,7 +336,7 @@ class AttachmentTest < Test::Unit::TestCase
               end
 
               should "delete the files" do
-                @existing_names.each{|f| assert ! File.exists?(f) }
+                @existing_names.each{|f| assert !File.exists?(f) }
               end
             end
           end
