@@ -61,6 +61,7 @@ module Paperclip
     # If the file that is assigned is not valid, the processing (i.e.
     # thumbnailing, etc) will NOT be run.
     def assign uploaded_file
+
       ensure_required_accessors!
 
       if uploaded_file.is_a?(Paperclip::Attachment)
@@ -75,11 +76,19 @@ module Paperclip
 
       return nil if uploaded_file.nil?
 
-      @queued_for_write[:original]   = uploaded_file.to_tempfile
-      instance_write(:file_name,       uploaded_file.original_filename.strip.gsub(/[^\w\d\.\-]+/, '_'))
-      instance_write(:content_type,    uploaded_file.content_type.to_s.strip)
-      instance_write(:file_size,       uploaded_file.size.to_i)
-      instance_write(:updated_at,      Time.now)
+      if uploaded_file.respond_to?(:[])
+        @queued_for_write[:original]   = uploaded_file['tempfile']
+        instance_write(:file_name,       uploaded_file['filename'].strip.gsub(/[^\w\d\.\-]+/, '_'))
+        instance_write(:content_type,    uploaded_file['content_type'].strip)
+        instance_write(:file_size,       uploaded_file['size'].to_i)
+        instance_write(:updated_at,      Time.now)
+      else
+        @queued_for_write[:original]   = uploaded_file.to_tempfile
+        instance_write(:file_name,       uploaded_file.original_filename.strip.gsub(/[^\w\d\.\-]+/, '_'))
+        instance_write(:content_type,    uploaded_file.content_type.to_s.strip)
+        instance_write(:file_size,       uploaded_file.size.to_i)
+        instance_write(:updated_at,      Time.now)
+      end
 
       @dirty = true
 
@@ -87,6 +96,7 @@ module Paperclip
 
       # Reset the file size if the original file was reprocessed.
       instance_write(:file_size, @queued_for_write[:original].size.to_i)
+
     ensure
       uploaded_file.close if close_uploaded_file
       validate
@@ -262,7 +272,11 @@ module Paperclip
     end
 
     def valid_assignment? file #:nodoc:
-      file.nil? || (file.respond_to?(:original_filename) && file.respond_to?(:content_type))
+      if file.respond_to?(:[])
+        file[:filename] && file[:content_type]
+      else
+        file.nil? || (file.respond_to?(:original_filename) && file.respond_to?(:content_type))
+      end
     end
 
     def validate #:nodoc:
