@@ -53,20 +53,20 @@ module Paperclip
 
     # Returns the RAILS_ROOT constant.
     def rails_root attachment, style
-      RAILS_ROOT
+      Object.const_defined?('RAILS_ROOT') ? RAILS_ROOT : nil
     end
 
     # Returns the RAILS_ENV constant.
     def rails_env attachment, style
-      RAILS_ENV
+      Object.const_defined?('RAILS_ENV') ? RAILS_ENV : nil
     end
 
     def merb_root attachment, style
-      Merb.root
+      Object.const_defined?('Merb') ? Merb.root : nil
     end
 
     def merb_env attachment, style
-      Merb.env
+      Object.const_defined?('Merb') ? Merb.env : nil
     end
 
     # Returns the snake cased, pluralized version of the class name.
