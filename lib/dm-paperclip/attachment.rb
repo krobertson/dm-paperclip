@@ -185,8 +185,7 @@ module Paperclip
     # Returns the last modified time of the file as originally assigned, and 
     # lives in the <attachment>_updated_at attribute of the model.
     def updated_at
-      time = instance_read(:updated_at)
-      time && time.to_i
+      instance_read(:updated_at)
     end
 
     # Paths and URLs can have a number of variables interpolated into them
