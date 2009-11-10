@@ -50,6 +50,16 @@ module Paperclip
     def timestamp attachment, style
       attachment.instance_read(:updated_at).to_s
     end
+    
+    def web_root attachment, style
+      if Object.const_defined?('Merb')
+        merb_root(attachment, style)
+      elsif Object.const_defined("RAILS_ROOT")
+        rails_root(attachment, style)
+      else
+        ""
+      end
+    end
 
     # Returns the RAILS_ROOT constant.
     def rails_root attachment, style
