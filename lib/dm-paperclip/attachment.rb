@@ -273,7 +273,7 @@ module Paperclip
 
     def valid_assignment? file #:nodoc:
       if file.respond_to?(:[])
-        file[:filename] && file[:content_type]
+        file['filename'] && file['content_type']
       else
         file.nil? || (file.respond_to?(:original_filename) && file.respond_to?(:content_type))
       end
