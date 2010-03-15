@@ -79,6 +79,11 @@ Rake::GemPackageTask.new(spec) do |pkg|
   pkg.need_tar = true 
 end
 
+desc 'Generate gemspec'
+task :gemspec do
+  File.open("#{spec.name}.gemspec", 'w') { |f| f.puts(spec.to_ruby) }
+end
+
 WIN32 = (PLATFORM =~ /win32|cygwin/) rescue nil
 SUDO  = WIN32 ? '' : ('sudo' unless ENV['SUDOLESS'])
 
