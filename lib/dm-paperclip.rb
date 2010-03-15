@@ -233,8 +233,8 @@ module Paperclip
       
       property_options = options.delete_if { |k,v| ![ :public, :protected, :private, :accessor, :reader, :writer ].include?(key) }
 
-      property :"#{name}_file_name",    String,   property_options
-      property :"#{name}_content_type", String,   property_options
+      property :"#{name}_file_name",    String,   property_options.merge(:length => 255)
+      property :"#{name}_content_type", String,   property_options.merge(:length => 255)
       property :"#{name}_file_size",    Integer,  property_options
       property :"#{name}_updated_at",   DateTime, property_options
 
