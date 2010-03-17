@@ -26,6 +26,9 @@
 # See the +has_attached_file+ documentation for more details.
 
 require 'tempfile'
+
+require 'dm-core'
+
 require 'dm-paperclip/upfile'
 require 'dm-paperclip/iostream'
 require 'dm-paperclip/geometry'
@@ -34,14 +37,6 @@ require 'dm-paperclip/thumbnail'
 require 'dm-paperclip/storage'
 require 'dm-paperclip/interpolations'
 require 'dm-paperclip/attachment'
-if defined? RAILS_ROOT
-  Dir.glob(File.join(File.expand_path(RAILS_ROOT), "lib", "paperclip_processors", "*.rb")).each do |processor|
-    require processor
-  end
-end
-
-# Only include validations if dm-validations is loaded
-require 'dm-paperclip/validations' unless defined?(DataMapper::Validate).nil?
 
 # The base module that gets included in ActiveRecord::Base. See the
 # documentation for Paperclip::ClassMethods for more useful information.
@@ -49,7 +44,63 @@ module Paperclip
 
   VERSION = "2.2.9.2"
 
+  # To configure Paperclip, put this code in an initializer, Rake task, or wherever:
+  #
+  #   Paperclip.configure do |config|
+  #     config.root               = Rails.root # the application root to anchor relative urls (defaults to Dir.pwd)
+  #     config.env                = Rails.env  # server env support, defaults to ENV['RACK_ENV'] or 'development'
+  #     config.use_dm_validations = true       # validate attachment sizes and such, defaults to false
+  #     config.processors_path    = 'lib/pc'   # relative path to look for processors, defaults to 'lib/paperclip_processors'
+  #   end
+  #
+  def self.configure
+    yield @config = Configuration.new
+    Paperclip.config = @config
+  end
+
+  def self.config=(config)
+    @config = config
+  end
+
+  def self.config
+    @config ||= Configuration.new
+  end
+
+  def self.require_processors
+    return if @processors_already_required
+    Dir.glob(File.expand_path("#{Paperclip.config.processors_path}/*.rb")).sort.each do |processor|
+      require processor
+    end
+    @processors_already_required = true
+  end
+
+  class Configuration
+
+    DEFAULT_PROCESSORS_PATH = 'lib/paperclip_processors'
+
+    attr_writer   :root, :env
+    attr_accessor :use_dm_validations
+
+    def root
+      @root ||= Dir.pwd
+    end
+
+    def env
+      @env ||= (ENV['RACK_ENV'] || 'development')
+    end
+
+    def processors_path=(path)
+      @processors_path = File.expand_path(path, root)
+    end
+
+    def processors_path
+      @processors_path ||= File.expand_path("../#{DEFAULT_PROCESSORS_PATH}", root)
+    end
+
+  end
+
   class << self
+
     # Provides configurability to Paperclip. There are a number of options available, such as:
     # * whiny: Will raise an error if Paperclip cannot process thumbnails of 
     #   an uploaded image. Defaults to true.
@@ -121,7 +172,7 @@ module Paperclip
       name = name.to_s.camel_case
       processor = Paperclip.const_get(name)
       unless processor.ancestors.include?(Paperclip::Processor)
-        raise PaperclipError.new("Processor #{name} was not found")
+        raise PaperclipError.new("[paperclip] Processor #{name} was not found")
       end
       processor
     end
@@ -154,7 +205,9 @@ module Paperclip
   end
   
   module Resource
+
     def self.included(base)
+
       base.class_eval <<-RUBY, __FILE__, __LINE__ + 1
         class_variable_set(:@@attachment_definitions,nil) unless class_variable_defined?(:@@attachment_definitions)
         def self.attachment_definitions
@@ -165,8 +218,21 @@ module Paperclip
           @@attachment_definitions = obj
         end
       RUBY
+
       base.extend Paperclip::ClassMethods
+
+      # Done at this time to ensure that the user
+      # had a chance to configure the app in an initializer
+      if Paperclip.config.use_dm_validations
+        require 'dm-validations'
+        require 'dm-paperclip/validations'
+        base.extend Paperclip::Validate::ClassMethods
+      end
+
+      Paperclip.require_processors
+
     end
+
   end
 
   module ClassMethods
@@ -258,44 +324,12 @@ module Paperclip
         ! attachment_for(name).original_filename.blank?
       end
 
-      unless defined?(DataMapper::Validate).nil?
+      if Paperclip.config.use_dm_validations
         add_validator_to_context(opts_from_validator_args([name]), [name], Paperclip::Validate::CopyAttachmentErrors)
       end
+
     end
 
-    unless defined?(DataMapper::Validate).nil?
-      # Places ActiveRecord-style validations on the size of the file assigned. The
-      # possible options are:
-      # * +in+: a Range of bytes (i.e. +1..1.megabyte+),
-      # * +less_than+: equivalent to :in => 0..options[:less_than]
-      # * +greater_than+: equivalent to :in => options[:greater_than]..Infinity
-      # * +message+: error message to display, use :min and :max as replacements
-      def validates_attachment_size(*fields)
-        opts = opts_from_validator_args(fields)
-        add_validator_to_context(opts, fields, Paperclip::Validate::SizeValidator)
-      end
-
-      # Adds errors if thumbnail creation fails. The same as specifying :whiny_thumbnails => true.
-      def validates_attachment_thumbnails name, options = {}
-        self.attachment_definitions[name][:whiny_thumbnails] = true
-      end
-
-      # Places ActiveRecord-style validations on the presence of a file.
-      def validates_attachment_presence(*fields)
-        opts = opts_from_validator_args(fields)
-        add_validator_to_context(opts, fields, Paperclip::Validate::RequiredFieldValidator)
-      end
-    
-      # Places ActiveRecord-style validations on the content type of the file assigned. The
-      # possible options are:
-      # * +content_type+: Allowed content types.  Can be a single content type or an array.  Allows all by default.
-      # * +message+: The message to display when the uploaded file has an invalid content type.
-      def validates_attachment_content_type(*fields)
-        opts = opts_from_validator_args(fields)
-        add_validator_to_context(opts, fields, Paperclip::Validate::ContentTypeValidator)
-      end
-    end
-    
     # Returns the attachment definitions defined by each call to
     # has_attached_file.
     def attachment_definitions

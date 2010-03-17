@@ -1,6 +1,41 @@
 module Paperclip
   module Validate
 
+    module ClassMethods
+
+      # Places ActiveRecord-style validations on the size of the file assigned. The
+      # possible options are:
+      # * +in+: a Range of bytes (i.e. +1..1.megabyte+),
+      # * +less_than+: equivalent to :in => 0..options[:less_than]
+      # * +greater_than+: equivalent to :in => options[:greater_than]..Infinity
+      # * +message+: error message to display, use :min and :max as replacements
+      def validates_attachment_size(*fields)
+        opts = opts_from_validator_args(fields)
+        add_validator_to_context(opts, fields, Paperclip::Validate::SizeValidator)
+      end
+
+      # Adds errors if thumbnail creation fails. The same as specifying :whiny_thumbnails => true.
+      def validates_attachment_thumbnails name, options = {}
+        self.attachment_definitions[name][:whiny_thumbnails] = true
+      end
+
+      # Places ActiveRecord-style validations on the presence of a file.
+      def validates_attachment_presence(*fields)
+        opts = opts_from_validator_args(fields)
+        add_validator_to_context(opts, fields, Paperclip::Validate::RequiredFieldValidator)
+      end
+
+      # Places ActiveRecord-style validations on the content type of the file assigned. The
+      # possible options are:
+      # * +content_type+: Allowed content types.  Can be a single content type or an array.  Allows all by default.
+      # * +message+: The message to display when the uploaded file has an invalid content type.
+      def validates_attachment_content_type(*fields)
+        opts = opts_from_validator_args(fields)
+        add_validator_to_context(opts, fields, Paperclip::Validate::ContentTypeValidator)
+      end
+
+    end
+
     class SizeValidator < DataMapper::Validate::GenericValidator #:nodoc:
       def initialize(field_name, options={})
         super
