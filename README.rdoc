@@ -41,6 +41,17 @@ In your model:
                                    :thumb => "100x100>" }
   end
 
+You will need to add an initializer to configure Paperclip.  If on Rails, can add a config/initializers/paperclip.rb, on Merb
+can use config/init.rb and add it to the Merb::BootLoader.after_app_loads section.  Can also use environment configs, rackup
+file, Rake task, wherever.
+
+  Paperclip.configure do |config|
+    config.root               = Rails.root # the application root to anchor relative urls (defaults to Dir.pwd)
+    config.env                = Rails.env  # server env support, defaults to ENV['RACK_ENV'] or 'development'
+    config.use_dm_validations = true       # validate attachment sizes and such, defaults to false
+    config.processors_path    = 'lib/pc'   # relative path to look for processors, defaults to 'lib/paperclip_processors'
+  end
+
 Your database will need to add four columns, avatar_file_name (varchar), avatar_content_type (varchar), and
 avatar_file_size (integer), and avatar_updated_at (datetime).  You can either add these manually, auto-
 migrate, or use the following migration:
