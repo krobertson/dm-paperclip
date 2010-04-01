@@ -49,7 +49,7 @@ def rebuild_model options = {}
     include DataMapper::Resource
     include DataMapper::Validate
     include Paperclip::Resource
-    property :id, Integer, :serial => true
+    property :id, Serial
     property :other, String
     has_attached_file :avatar, options
   end
