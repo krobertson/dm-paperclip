@@ -113,7 +113,7 @@ module Paperclip
     # update time appended to the url
     def url style = default_style, include_updated_timestamp = true
       the_url = original_filename.nil? ? interpolate(@default_url, style) : interpolate(@url, style)
-      include_updated_timestamp && updated_at ? [the_url, updated_at].compact.join(the_url.include?("?") ? "&" : "?") : the_url
+      include_updated_timestamp && updated_at ? [the_url, updated_at.to_i].compact.join(the_url.include?("?") ? "&" : "?") : the_url
     end
 
     # Returns the path of the attachment as defined by the :path option. If the
