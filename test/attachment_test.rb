@@ -181,7 +181,8 @@ class AttachmentTest < Test::Unit::TestCase
       @not_file = mock
       @not_file.stubs(:nil?).returns(false)
       @not_file.expects(:to_tempfile).returns(self)
-      @not_file.expects(:original_filename).returns("sheep_say_bæ.png\r\n")
+      #@not_file.expects(:original_filename).returns("sheep_say_bæ.png\r\n")
+      @not_file.expects(:original_filename).returns("sheep_say_b_.png\r\n")
       @not_file.expects(:content_type).returns("image/png\r\n")
       @not_file.expects(:size).returns(10)
 
