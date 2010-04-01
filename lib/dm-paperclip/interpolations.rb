@@ -50,7 +50,7 @@ module Paperclip
     def timestamp attachment, style
       attachment.instance_read(:updated_at).to_s
     end
-    
+
     def web_root attachment, style
       if Object.const_defined?('Merb')
         merb_root(attachment, style)

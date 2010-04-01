@@ -47,7 +47,7 @@ require 'dm-paperclip/validations' unless defined?(DataMapper::Validate).nil?
 # documentation for Paperclip::ClassMethods for more useful information.
 module Paperclip
 
-  VERSION = "2.2.9.1"
+  VERSION = "2.2.9.2"
 
   class << self
     # Provides configurability to Paperclip. There are a number of options available, such as:
