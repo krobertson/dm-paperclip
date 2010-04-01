@@ -229,12 +229,12 @@ class AttachmentTest < Test::Unit::TestCase
 
     context "with a file assigned in the database" do
       setup do
-        @instance.stubs(:attribute_get).with(:avatar_file_name).returns('5k.png')
-        @instance.stubs(:attribute_get).with(:avatar_content_type).returns("image/png")
-        @instance.stubs(:attribute_get).with(:avatar_file_size).returns(12345)
+        @instance.stubs(:avatar_file_name).returns('5k.png')
+        @instance.stubs(:avatar_content_type).returns("image/png")
+        @instance.stubs(:avatar_file_size).returns(12345)
         @now = Time.now
         Time.stubs(:now).returns(@now)
-        @instance.stubs(:attribute_get).with(:avatar_updated_at).returns(Time.now)
+        @instance.stubs(:avatar_updated_at).returns(Time.now)
       end
 
       should "return a correct url even if the file does not exist" do
@@ -261,7 +261,7 @@ class AttachmentTest < Test::Unit::TestCase
       end
 
       should "return the proper path when filename has multiple .'s" do
-        @instance.stubs(:attribute_get).with(:avatar_file_name).returns("5k.old.png")      
+        @instance.stubs(:avatar_file_name).returns("5k.old.png")      
         assert_equal "./test/../tmp/avatars/dummies/original/#{@instance.id}/5k.old.png", @attachment.path
       end
 
@@ -328,15 +328,12 @@ class AttachmentTest < Test::Unit::TestCase
                 @existing_names = @attachment.styles.keys.collect do |style|
                   @attachment.path(style)
                 end
-                @instance.expects(:attributes=).with({ :avatar_file_name => nil,
-                  :avatar_content_type => nil,
-                  :avatar_file_size => nil })
                 @attachment.assign nil
                 @attachment.save
               end
 
               should "delete the files" do
-                @existing_names.each{|f| assert !File.exists?(f) }
+                @existing_names.each { |f| assert !File.exists?(f) }
               end
             end
           end
