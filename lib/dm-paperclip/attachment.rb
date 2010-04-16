@@ -274,7 +274,7 @@ module Paperclip
     end
 
     def valid_assignment? file #:nodoc:
-      if file.respond_to?(:[])
+      if file.is_a?(Hash) || (defined?(Mash) && file.is_a?(Mash))
         file[:filename] || file['filename']
       else
         file.nil? || (file.respond_to?(:original_filename) && file.respond_to?(:content_type))

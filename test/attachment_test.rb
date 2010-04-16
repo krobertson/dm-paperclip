@@ -149,9 +149,12 @@ class AttachmentTest < Test::Unit::TestCase
     setup do
       rebuild_model
 
+      @tempfile = mock
+      @tempfile.expects(:size).returns(10)
+
       @not_file = mock
       @not_file.stubs(:nil?).returns(false)
-      @not_file.expects(:to_tempfile).returns(self)
+      @not_file.expects(:to_tempfile).returns(@tempfile)
       @not_file.expects(:original_filename).returns("filename.png\r\n")
       @not_file.expects(:content_type).returns("image/png\r\n")
       @not_file.expects(:size).returns(10)
@@ -178,9 +181,12 @@ class AttachmentTest < Test::Unit::TestCase
     setup do
       rebuild_model
 
+      @tempfile = mock
+      @tempfile.expects(:size).returns(10)
+
       @not_file = mock
       @not_file.stubs(:nil?).returns(false)
-      @not_file.expects(:to_tempfile).returns(self)
+      @not_file.expects(:to_tempfile).returns(@tempfile)
       @not_file.expects(:original_filename).returns("sheep_say_b_.png\r\n")
       @not_file.expects(:content_type).returns("image/png\r\n")
       @not_file.expects(:size).returns(10)
@@ -299,7 +305,7 @@ class AttachmentTest < Test::Unit::TestCase
 
             should "commit the files to disk" do
               [:large, :medium, :small].each do |style|
-                io = @attachment.to_io(style)
+                io = @attachment.to_file(style)
                 assert File.exists?(io)
                 assert ! io.is_a?(::Tempfile)
               end
@@ -310,7 +316,7 @@ class AttachmentTest < Test::Unit::TestCase
                [:medium, 100, 15, "GIF"],
                [:small, 32, 32, "JPEG"]].each do |style|
                 cmd = "identify -format '%w %h %b %m' " + 
-                      "#{@attachment.to_io(style.first).path}"
+                      "#{@attachment.path(style.first)}"
                 out = `#{cmd}`
                 width, height, size, format = out.split(" ")
                 assert_equal style[1].to_s, width.to_s 
