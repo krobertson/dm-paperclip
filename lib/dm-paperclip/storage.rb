@@ -8,21 +8,21 @@ module Paperclip
     # * +path+: The location of the repository of attachments on disk. This can (and, in
     #   almost all cases, should) be coordinated with the value of the +url+ option to
     #   allow files to be saved into a place where Apache can serve them without
-    #   hitting your app. Defaults to
+    #   hitting your app. Defaults to 
     #   ":rails_root/public/:attachment/:id/:style/:basename.:extension"
-    #   By default this places the files in the app's public directory which can be served
-    #   directly. If you are using capistrano for deployment, a good idea would be to
-    #   make a symlink to the capistrano-created system directory from inside your app's
+    #   By default this places the files in the app's public directory which can be served 
+    #   directly. If you are using capistrano for deployment, a good idea would be to 
+    #   make a symlink to the capistrano-created system directory from inside your app's 
     #   public directory.
     #   See Paperclip::Attachment#interpolate for more information on variable interpolaton.
     #     :path => "/var/app/attachments/:class/:id/:style/:basename.:extension"
     module Filesystem
       def self.extended base
       end
-
-      def exists?(style = default_style)
+      
+      def exists?(style_name = default_style)
         if original_filename
-          File.exist?(path(style))
+          File.exist?(path(style_name))
         else
           false
         end
@@ -30,18 +30,17 @@ module Paperclip
 
       # Returns representation of the data of the file assigned to the given
       # style, in the format most representative of the current storage.
-      def to_file style = default_style
-        @queued_for_write[style] || (File.new(path(style), 'rb') if exists?(style))
+      def to_file style_name = default_style
+        @queued_for_write[style_name] || (File.new(path(style_name), 'rb') if exists?(style_name))
       end
-      alias_method :to_io, :to_file
 
       def flush_writes #:nodoc:
-        @queued_for_write.each do |style, file|
+        @queued_for_write.each do |style_name, file|
           file.close
-          FileUtils.mkdir_p(File.dirname(path(style)))
-          log("saving #{path(style)}")
-          FileUtils.mv(file.path, path(style))
-          FileUtils.chmod(0644, path(style))
+          FileUtils.mkdir_p(File.dirname(path(style_name)))
+          log("saving #{path(style_name)}")
+          FileUtils.mv(file.path, path(style_name))
+          FileUtils.chmod(0644, path(style_name))
         end
         @queued_for_write = {}
       end
@@ -79,26 +78,26 @@ module Paperclip
     #   database.yml file, so different environments can use different accounts:
     #     development:
     #       access_key_id: 123...
-    #       secret_access_key: 123...
+    #       secret_access_key: 123... 
     #     test:
     #       access_key_id: abc...
-    #       secret_access_key: abc...
+    #       secret_access_key: abc... 
     #     production:
     #       access_key_id: 456...
-    #       secret_access_key: 456...
+    #       secret_access_key: 456... 
     #   This is not required, however, and the file may simply look like this:
     #     access_key_id: 456...
-    #     secret_access_key: 456...
+    #     secret_access_key: 456... 
     #   In which case, those access keys will be used in all environments. You can also
     #   put your bucket name in this file, instead of adding it to the code directly.
-    #   This is useful when you want the same account but a different bucket for
+    #   This is useful when you want the same account but a different bucket for 
     #   development versus production.
     # * +s3_permissions+: This is a String that should be one of the "canned" access
     #   policies that S3 provides (more information can be found here:
     #   http://docs.amazonwebservices.com/AmazonS3/2006-03-01/RESTAccessPolicy.html#RESTCannedAccessPolicies)
-    #   The default for Paperclip is "public-read".
-    # * +s3_protocol+: The protocol for the URLs generated to your S3 assets. Can be either
-    #   'http' or 'https'. Defaults to 'http' when your :s3_permissions are 'public-read' (the
+    #   The default for Paperclip is :public_read.
+    # * +s3_protocol+: The protocol for the URLs generated to your S3 assets. Can be either 
+    #   'http' or 'https'. Defaults to 'http' when your :s3_permissions are :public_read (the
     #   default), and 'https' when your :s3_permissions are anything else.
     # * +s3_headers+: A hash of headers such as {'Expires' => 1.year.from_now.httpdate}
     # * +bucket+: This is the name of the S3 bucket that will store your files. Remember
@@ -112,7 +111,7 @@ module Paperclip
     # * +url+: There are three options for the S3 url. You can choose to have the bucket's name
     #   placed domain-style (bucket.s3.amazonaws.com) or path-style (s3.amazonaws.com/bucket).
     #   Lastly, you can specify a CNAME (which requires the CNAME to be specified as
-    #   :s3_alias_url. You can read more about CNAMEs and S3 at
+    #   :s3_alias_url. You can read more about CNAMEs and S3 at 
     #   http://docs.amazonwebservices.com/AmazonS3/latest/index.html?VirtualHosting.html
     #   Normally, this won't matter in the slightest and you can leave the default (which is
     #   path-style, or :s3_path_url). But in some cases paths don't work and you need to use
@@ -128,17 +127,27 @@ module Paperclip
     #   separate parts of your file name.
     module S3
       def self.extended base
-        require 'right_aws'
+        begin
+          require 'aws/s3'
+        rescue LoadError => e
+          e.message << " (You may need to install the aws-s3 gem)"
+          raise e
+        end
+
         base.instance_eval do
           @s3_credentials = parse_credentials(@options[:s3_credentials])
           @bucket         = @options[:bucket]         || @s3_credentials[:bucket]
           @bucket         = @bucket.call(self) if @bucket.is_a?(Proc)
           @s3_options     = @options[:s3_options]     || {}
-          @s3_permissions = @options[:s3_permissions] || 'public-read'
-          @s3_protocol    = @options[:s3_protocol]    || (@s3_permissions == 'public-read' ? 'http' : 'https')
+          @s3_permissions = @options[:s3_permissions] || :public_read
+          @s3_protocol    = @options[:s3_protocol]    || (@s3_permissions == :public_read ? 'http' : 'https')
           @s3_headers     = @options[:s3_headers]     || {}
           @s3_host_alias  = @options[:s3_host_alias]
           @url            = ":s3_path_url" unless @url.to_s.match(/^:s3.*url$/)
+          AWS::S3::Base.establish_connection!( @s3_options.merge(
+            :access_key_id => @s3_credentials[:access_key_id],
+            :secret_access_key => @s3_credentials[:secret_access_key]
+          ))
         end
         Paperclip.interpolates(:s3_alias_url) do |attachment, style|
           "#{attachment.s3_protocol}://#{attachment.s3_host_alias}/#{attachment.path(style).gsub(%r{^/}, "")}"
@@ -150,15 +159,9 @@ module Paperclip
           "#{attachment.s3_protocol}://#{attachment.bucket_name}.s3.amazonaws.com/#{attachment.path(style).gsub(%r{^/}, "")}"
         end
       end
-
-      def s3
-        @s3 ||= RightAws::S3.new(@s3_credentials[:access_key_id],
-                                 @s3_credentials[:secret_access_key],
-                                 @s3_options)
-      end
-
-      def s3_bucket
-        @s3_bucket ||= s3.bucket(@bucket, true, @s3_permissions)
+      
+      def expiring_url(time = 3600)
+        AWS::S3::S3Object.url_for(path, bucket_name, :expires_in => time )
       end
 
       def bucket_name
@@ -170,16 +173,20 @@ module Paperclip
       end
 
       def parse_credentials creds
-        creds = find_credentials(creds).to_mash
+        creds = find_credentials(creds).to_mash.stringify_keys!
         if defined? Merb && Merb.respond_to?(:env)
-          (creds[Merb.env] || creds)
+          (creds[Merb.env] || creds).symbolize_keys
         else
-          (creds[RAILS_ENV] || creds)
+          (creds[RAILS_ENV] || creds).symbolize_keys
         end
       end
-
+      
       def exists?(style = default_style)
-        s3_bucket.key(path(style)) ? true : false
+        if original_filename
+          AWS::S3::S3Object.exists?(path(style), bucket_name)
+        else
+          false
+        end
       end
 
       def s3_protocol
@@ -189,18 +196,24 @@ module Paperclip
       # Returns representation of the data of the file assigned to the given
       # style, in the format most representative of the current storage.
       def to_file style = default_style
-        @queued_for_write[style] || s3_bucket.key(path(style))
+        return @queued_for_write[style] if @queued_for_write[style]
+        file = Tempfile.new(path(style))
+        file.write(AWS::S3::S3Object.value(path(style), bucket_name))
+        file.rewind
+        return file
       end
-      alias_method :to_io, :to_file
 
       def flush_writes #:nodoc:
         @queued_for_write.each do |style, file|
           begin
             log("saving #{path(style)}")
-            key = s3_bucket.key(path(style))
-            key.data = file
-            key.put(nil, @s3_permissions, {'Content-type' => instance_read(:content_type)}.merge(@s3_headers))
-          rescue RightAws::AwsError => e
+            AWS::S3::S3Object.store(path(style),
+                                    file,
+                                    bucket_name,
+                                    {:content_type => instance_read(:content_type),
+                                     :access => @s3_permissions,
+                                    }.merge(@s3_headers))
+          rescue AWS::S3::ResponseError => e
             raise
           end
         end
@@ -211,22 +224,20 @@ module Paperclip
         @queued_for_delete.each do |path|
           begin
             log("deleting #{path}")
-            if file = s3_bucket.key(path)
-              file.delete
-            end
-          rescue RightAws::AwsError
+            AWS::S3::S3Object.delete(path, bucket_name)
+          rescue AWS::S3::ResponseError
             # Ignore this.
           end
         end
         @queued_for_delete = []
       end
-
+      
       def find_credentials creds
         case creds
         when File
-          YAML.load_file(creds.path)
+          YAML::load(ERB.new(File.read(creds.path)).result)
         when String
-          YAML.load_file(creds)
+          YAML::load(ERB.new(File.read(creds)).result)
         when Hash
           creds
         else
