@@ -1,6 +1,6 @@
 =DataMapper Paperclip
 
-DM-Paperclip is a port of Thoughtbot's Paperclip plugin to work with DataMapper 0.9.  This plugin is fully compatible with
+DM-Paperclip is a port of Thoughtbot's Paperclip plugin to work with DataMapper.  This plugin is fully compatible with
 the original ActiveRecord-oriented Paperclip.  You could take an existing ActiveRecord database and use it with DataMapper.
 The module also includes updates validation handling and automatic including of the necessary 'property' fields into
 your model.
