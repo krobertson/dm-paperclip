@@ -26,7 +26,6 @@
 # See the +has_attached_file+ documentation for more details.
 
 require 'erb'
-require 'extlib'
 require 'tempfile'
 
 require 'dm-core'
