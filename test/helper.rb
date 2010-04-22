@@ -56,7 +56,7 @@ def rebuild_model options = {}
     include DataMapper::Resource
     include DataMapper::Validate
     include Paperclip::Resource
-    property :id, Integer, :serial => true
+    property :id, ::DataMapper::Types::Serial
     property :other, String
     has_attached_file :avatar, options
   end
@@ -64,8 +64,8 @@ def rebuild_model options = {}
 end
 
 def temporary_env(new_env)
-  old_env = defined?(RAILS_ENV) ? RAILS_ENV : nil
-  Object.const_set("RAILS_ENV", new_env)
+  old_env = Merb.env
+  Merb.env(new_env)
   yield
-  Object.const_set("RAILS_ENV", old_env)
+  Merb.env(old_env)
 end
