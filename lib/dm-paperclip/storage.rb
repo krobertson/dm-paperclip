@@ -176,8 +176,14 @@ module Paperclip
         creds = find_credentials(creds).to_mash.stringify_keys!
         if defined? Merb && Merb.respond_to?(:env)
           (creds[Merb.env] || creds).symbolize_keys
-        else
+        elsif defined? RAILS_ENV
           (creds[RAILS_ENV] || creds).symbolize_keys
+        elsif defined? Rails && Rails.respond_to(:env)
+          (creds[Rails.env] || creds).symbolize_keys
+        elsif defined? RACK_ENV
+          (creds[RACK_ENV] || creds).symbolize_keys
+        else
+          creds.symbolize_keys
         end
       end
       
