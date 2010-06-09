@@ -4,6 +4,7 @@ require 'shoulda'
 require 'mocha'
 require 'tempfile'
 
+require 'extlib'
 require 'dm-core'
 require 'dm-validations'
 require 'dm-migrations'
