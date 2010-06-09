@@ -28,6 +28,7 @@
 require 'erb'
 require 'tempfile'
 
+require 'extlib'
 require 'dm-core'
 
 require 'dm-paperclip/upfile'
@@ -43,7 +44,7 @@ require 'dm-paperclip/attachment'
 # documentation for Paperclip::ClassMethods for more useful information.
 module Paperclip
 
-  VERSION = "2.4.0"
+  VERSION = "2.4.1"
 
   # To configure Paperclip, put this code in an initializer, Rake task, or wherever:
   #
