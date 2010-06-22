@@ -28,7 +28,6 @@
 require 'erb'
 require 'tempfile'
 
-require 'extlib'
 require 'dm-core'
 
 require 'dm-paperclip/upfile'
