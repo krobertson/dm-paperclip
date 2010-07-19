@@ -5,7 +5,7 @@ require 'rake/gempackagetask'
 
 $LOAD_PATH << File.join(File.dirname(__FILE__), 'lib')
 require 'dm-core'
-require 'dm-validations'
+#require 'dm-validations'
 require 'dm-paperclip'
 
 desc 'Default: run unit tests.'

@@ -5,7 +5,7 @@ require 'mocha'
 require 'tempfile'
 
 require 'dm-core'
-require 'dm-validations'
+#require 'dm-validations'
 require 'dm-migrations'
 begin
   require 'ruby-debug'
@@ -46,7 +46,8 @@ end
 Paperclip.configure do |config|
   config.root               = Merb.root # the application root to anchor relative urls (defaults to Dir.pwd)
   config.env                = Merb.env  # server env support, defaults to ENV['RACK_ENV'] or 'development'
-  config.use_dm_validations = true      # validate attachment sizes and such, defaults to false
+  #config.use_dm_validations = true      # validate attachment sizes and such, defaults to false
+  config.use_am_validations = true      # validate attachment sizes and such, defaults to false
 end
 
 def rebuild_model options = {}
@@ -54,7 +55,7 @@ def rebuild_model options = {}
   Object.const_set("Dummy", Class.new())
   Dummy.class_eval do
     include DataMapper::Resource
-    include DataMapper::Validate
+    #include DataMapper::Validate
     include Paperclip::Resource
     property :id, ::DataMapper::Types::Serial
     property :other, String

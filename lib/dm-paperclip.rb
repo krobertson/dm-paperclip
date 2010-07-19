@@ -81,6 +81,7 @@ module Paperclip
 
     attr_writer   :root, :env
     attr_accessor :use_dm_validations
+    attr_accessor :use_am_validations
 
     def root
       @root ||= Dir.pwd
@@ -224,9 +225,19 @@ module Paperclip
 
       # Done at this time to ensure that the user
       # had a chance to configure the app in an initializer
+      raise if Paperclip.config.use_dm_validations && Paperclip.config.use_am_validations
+
       if Paperclip.config.use_dm_validations
-        require 'dm-validations'
-        require 'dm-paperclip/validations'
+        require 'dm-active_model'
+        require 'dm-paperclip/am-validations'
+        base.extend Paperclip::Validate::ClassMethods
+      end
+
+      if Paperclip.config.use_am_validations
+        require 'active_model'
+        require 'dm-active_model'
+        require 'dm-paperclip/am-validations'
+        base.send(:include,ActiveModel::Validations)
         base.extend Paperclip::Validate::ClassMethods
       end
 
@@ -327,6 +338,11 @@ module Paperclip
 
       if Paperclip.config.use_dm_validations
         add_validator_to_context(opts_from_validator_args([name]), [name], Paperclip::Validate::CopyAttachmentErrors)
+      end
+
+      if Paperclip.config.use_am_validations
+        #add_validator_to_context(opts_from_validator_args([name]), [name], Paperclip::Validate::CopyAttachmentErrors)
+        validates_with Paperclip::Validate::CopyAttachmentErrors, _merge_attributes([name])
       end
 
     end
