@@ -19,6 +19,7 @@ class PaperclipTest < Test::Unit::TestCase
       Object.const_set("DummyTwo", Class.new())
       DummyTwo.class_eval do
         include DataMapper::Resource
+        include DataMapper::Validate
         include Paperclip::Resource
         property :id, DataMapper::Types::Serial
         property :other, String
