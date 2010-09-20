@@ -72,7 +72,8 @@ spec = Gem::Specification.new do |s|
   s.extra_rdoc_files  = ["README.rdoc"]
   s.rdoc_options << '--line-numbers' << '--inline-source'
   s.requirements << "ImageMagick"
-  s.requirements << "data_mapper"
+  s.requirements << "dm-core"
+  s.requirements << "dm-validations"
 end
  
 Rake::GemPackageTask.new(spec) do |pkg| 

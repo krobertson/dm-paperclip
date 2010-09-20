@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://invalidlogic.com/dm-paperclip/}
   s.rdoc_options = ["--line-numbers", "--inline-source"]
   s.require_paths = ["lib"]
-  s.requirements = ["ImageMagick", "data_mapper"]
+  s.requirements = ["ImageMagick", "dm-core", "dm-validations"]
   s.rubyforge_project = %q{dm-paperclip}
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{File attachments as attributes for DataMapper, based on the original Paperclip by Jon Yurek at Thoughtbot}
