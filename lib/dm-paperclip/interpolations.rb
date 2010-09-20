@@ -54,21 +54,21 @@ module Paperclip
     def web_root attachment, style
       if Object.const_defined?('Merb')
         merb_root(attachment, style)
-      elsif Object.const_defined("RAILS_ROOT")
+      elsif Object.const_defined("Rails")
         rails_root(attachment, style)
       else
         ""
       end
     end
 
-    # Returns the RAILS_ROOT constant.
+    # Returns the Rails.root.to_s constant.
     def rails_root attachment, style
-      Object.const_defined?('RAILS_ROOT') ? RAILS_ROOT : nil
+      Object.const_defined?('Rails') ? Rails.root.to_s : nil
     end
 
     # Returns the RAILS_ENV constant.
     def rails_env attachment, style
-      Object.const_defined?('RAILS_ENV') ? RAILS_ENV : nil
+      Object.const_defined?('Rails') ? Rails.env : nil
     end
 
     def merb_root attachment, style

@@ -13,8 +13,20 @@ rescue LoadError
   puts "ruby-debug not loaded"
 end
 
-ROOT       = File.join(File.dirname(__FILE__), '..')
-RAILS_ROOT = ROOT
+ROOT = File.join(File.dirname(__FILE__), '..')
+
+module Rails
+  class << self
+    def root
+      ROOT
+    end
+
+    def env
+      "test"
+    end
+  end
+end
+
 RAILS_ENV  = ENV['RAILS_ENV']
 
 Object.const_set("Merb", Class.new())
