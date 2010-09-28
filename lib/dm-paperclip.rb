@@ -208,18 +208,6 @@ module Paperclip
   module Resource
 
     def self.included(base)
-
-      base.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        class_variable_set(:@@attachment_definitions,nil) unless class_variable_defined?(:@@attachment_definitions)
-        def self.attachment_definitions
-          @@attachment_definitions
-        end
-
-        def self.attachment_definitions=(obj)
-          @@attachment_definitions = obj
-        end
-      RUBY
-
       base.extend Paperclip::ClassMethods
 
       # Done at this time to ensure that the user
@@ -295,9 +283,17 @@ module Paperclip
     def has_attached_file name, options = {}
       include InstanceMethods
 
-      self.attachment_definitions = {} if self.attachment_definitions.nil?
-      self.attachment_definitions[name] = {:validations => []}.merge(options)
-      
+      class << self
+        attr_reader :attachment_definitions
+
+        def attachment_definitions=(opts)
+          @attachment_definitions = opts
+        end
+      end
+
+      @attachment_definitions = {} unless @attachment_definitions
+      @attachment_definitions[name] = {:validations => []}.merge(options)
+
       property_options = options.delete_if { |k,v| ![ :public, :protected, :private, :accessor, :reader, :writer ].include?(key) }
 
       property :"#{name}_file_name",    String,   property_options.merge(:length => 255)
@@ -307,7 +303,7 @@ module Paperclip
 
       after :save, :save_attached_files
       before :destroy, :destroy_attached_files
-      
+
       # not needed with extlib just do before :post_process, or after :post_process
       # define_callbacks :before_post_process, :after_post_process
       # define_callbacks :"before_#{name}_post_process", :"after_#{name}_post_process"
