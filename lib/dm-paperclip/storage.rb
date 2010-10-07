@@ -242,7 +242,7 @@ module Paperclip
         case creds
         when File
           YAML::load(ERB.new(File.read(creds.path)).result)
-        when String
+        when Pathname, String
           YAML::load(ERB.new(File.read(creds)).result)
         when Hash
           creds
