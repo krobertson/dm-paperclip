@@ -76,12 +76,112 @@ module Paperclip
     #   does not support directories, you can still use a / to separate
     #   parts of your file name.
     module S3
+      # Mixin which interfaces with the 'aws' library.
+      module AwsLibrary
+        protected
+
+        def s3_connect!
+          raise(NotImplemented,"s3_connect! was not implemented",caller)
+        end
+
+        def s3_expiring_url(time)
+          raise(NotImplemented,"s3_expiring_url was not implemented",caller)
+        end
+
+        def s3_exists?(style)
+          raise(NotImplemented,"s3_exists? was not implemented",caller)
+        end
+
+        def s3_temp_file(style)
+          raise(NotImplemented,"s3_temp_file was not implemented",caller)
+        end
+
+        def s3_store(style,file)
+          raise(NotImplemented,"s3_store was not implemented",caller)
+        end
+
+        def s3_delete(path)
+          raise(NotImplemented,"s3_delete was not implemented",caller)
+        end
+      end
+
+      # Mixin which interfaces with the 'aws-s3' library.
+      module AwsS3Library
+        protected
+
+        def s3_connect!
+          AWS::S3::Base.establish_connection!( @s3_options.merge(
+            :access_key_id => @s3_credentials[:access_key_id],
+            :secret_access_key => @s3_credentials[:secret_access_key]
+          ))
+        end
+
+        def s3_expiring_url(time)
+          AWS::S3::S3Object.url_for(path, bucket_name, :expires_in => time)
+        end
+
+        def s3_exists?(style)
+          if original_filename
+            AWS::S3::S3Object.exists?(path(style), bucket_name)
+          else
+            false
+          end
+        end
+
+        def s3_temp_file(style)
+          file = Tempfile.new(path(style))
+          file.write(AWS::S3::S3Object.value(path(style), bucket_name))
+          file.rewind
+
+          return file
+        end
+
+        def s3_store(style,file)
+          begin
+            AWS::S3::S3Object.store(
+              path(style),
+              file,
+              bucket_name,
+              {
+                :content_type => instance_read(:content_type),
+                :access => @s3_permissions,
+              }.merge(@s3_headers)
+            )
+          rescue AWS::S3::ResponseError => e
+            raise
+          end
+        end
+
+        def s3_delete(path)
+          begin
+            AWS::S3::S3Object.delete(path, bucket_name)
+          rescue AWS::S3::ResponseError
+            # Ignore this.
+          end
+        end
+      end
+
+      # Libraries and mixins that provide S3 support
+      LIBRARIES = {
+        'aws/s3' => AwsS3Library,
+        'aws' => AwsLibrary
+      }
+
       def self.extended(base)
-        begin
-          require 'aws/s3'
-        rescue LoadError => e
-          e.message << ' (You may need to install the aws-s3 gem)'
-          raise e
+        # attempt to load one of the S3 libraries
+        s3_detected = LIBRARIES.any? do |path,mixin|
+          begin
+            require path
+
+            base.send :extend, mixin
+            true
+          rescue LoadError => e
+            false
+          end
+        end
+
+        unless s3_detected
+          raise(LoadError,"unable to load any S3 library (#{LIBRARIES.keys.join(', ')})",caller)
         end
 
         base.instance_eval do
@@ -94,10 +194,8 @@ module Paperclip
           @s3_headers     = (@options[:s3_headers] || {})
           @s3_host_alias  = @options[:s3_host_alias]
           @url            = ':s3_path_url' unless @url.to_s.match(/^:s3.*url$/)
-          AWS::S3::Base.establish_connection!( @s3_options.merge(
-            :access_key_id => @s3_credentials[:access_key_id],
-            :secret_access_key => @s3_credentials[:secret_access_key]
-          ))
+
+          s3_connect!
         end
 
         Paperclip.interpolates(:s3_alias_url) do |attachment, style|
@@ -114,7 +212,7 @@ module Paperclip
       end
       
       def expiring_url(time = 3600)
-        AWS::S3::S3Object.url_for(path, bucket_name, :expires_in => time )
+        s3_expiring_url(time)
       end
 
       def bucket_name
@@ -141,11 +239,7 @@ module Paperclip
       end
       
       def exists?(style = default_style)
-        if original_filename
-          AWS::S3::S3Object.exists?(path(style), bucket_name)
-        else
-          false
-        end
+        s3_exists?(style)
       end
 
       def s3_protocol
@@ -155,31 +249,17 @@ module Paperclip
       # Returns representation of the data of the file assigned to the given
       # style, in the format most representative of the current storage.
       def to_file(style = default_style)
-        return @queued_for_write[style] if @queued_for_write[style]
-
-        file = Tempfile.new(path(style))
-        file.write(AWS::S3::S3Object.value(path(style), bucket_name))
-        file.rewind
-        return file
+        if @queued_for_write[style]
+          @queued_for_write[style]
+        else
+          s3_temp_file(style)
+        end
       end
 
       def flush_writes #:nodoc:
         @queued_for_write.each do |style, file|
-          begin
-            log("saving #{path(style)}")
-
-            AWS::S3::S3Object.store(
-              path(style),
-              file,
-              bucket_name,
-              {
-                :content_type => instance_read(:content_type),
-                :access => @s3_permissions,
-              }.merge(@s3_headers)
-            )
-          rescue AWS::S3::ResponseError => e
-            raise
-          end
+          log("saving #{path(style)}")
+          s3_store(style,file)
         end
 
         @queued_for_write = {}
@@ -187,17 +267,14 @@ module Paperclip
 
       def flush_deletes #:nodoc:
         @queued_for_delete.each do |path|
-          begin
-            log("deleting #{path}")
-
-            AWS::S3::S3Object.delete(path, bucket_name)
-          rescue AWS::S3::ResponseError
-            # Ignore this.
-          end
+          log("deleting #{path}")
+          s3_delete(path)
         end
 
         @queued_for_delete = []
       end
+
+      private
       
       def find_credentials(creds)
         case creds
@@ -211,8 +288,6 @@ module Paperclip
           raise ArgumentError, 'Credentials are not a path, file, or hash.'
         end
       end
-
-      private :find_credentials
 
     end
   end
