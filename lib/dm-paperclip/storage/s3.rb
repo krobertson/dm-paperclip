@@ -81,27 +81,34 @@ module Paperclip
         protected
 
         def s3_connect!
-          raise(NotImplemented,"s3_connect! was not implemented",caller)
+          @s3 = Aws::S3.new(
+            @s3_credentials[:access_key_id],
+            @s3_credentials[:secret_access_key]
+          )
+          @s3_bucket = @s3.bucket(bucket_name)
         end
 
-        def s3_expiring_url(time)
-          raise(NotImplemented,"s3_expiring_url was not implemented",caller)
+        def s3_expiring_url(key,time)
+          @s3.get_link(bucket_name,key,time)
         end
 
-        def s3_exists?(style)
-          raise(NotImplemented,"s3_exists? was not implemented",caller)
+        def s3_exists?(key)
+          @s3_bucket.keys(:prefix => key).include?(key)
         end
 
-        def s3_temp_file(style)
-          raise(NotImplemented,"s3_temp_file was not implemented",caller)
+        def s3_download(key,file)
+          @s3_bucket.key(key).get { |chunk| file.write(chunk) }
         end
 
-        def s3_store(style,file)
-          raise(NotImplemented,"s3_store was not implemented",caller)
+        def s3_store(key,file)
+          @s3_bucket.key(key).put(
+            file,
+            @s3_permissions.to_s.gsub('_','-')
+          )
         end
 
-        def s3_delete(path)
-          raise(NotImplemented,"s3_delete was not implemented",caller)
+        def s3_delete(key)
+          @s3_bucket.key(key).delete
         end
       end
 
@@ -110,36 +117,28 @@ module Paperclip
         protected
 
         def s3_connect!
-          AWS::S3::Base.establish_connection!( @s3_options.merge(
+          AWS::S3::Base.establish_connection!(@s3_options.merge(
             :access_key_id => @s3_credentials[:access_key_id],
             :secret_access_key => @s3_credentials[:secret_access_key]
           ))
         end
 
-        def s3_expiring_url(time)
-          AWS::S3::S3Object.url_for(path, bucket_name, :expires_in => time)
+        def s3_expiring_url(key,time)
+          AWS::S3::S3Object.url_for(key, bucket_name, :expires_in => time)
         end
 
-        def s3_exists?(style)
-          if original_filename
-            AWS::S3::S3Object.exists?(path(style), bucket_name)
-          else
-            false
-          end
+        def s3_exists?(key)
+          AWS::S3::S3Object.exists?(key, bucket_name)
         end
 
-        def s3_temp_file(style)
-          file = Tempfile.new(path(style))
-          file.write(AWS::S3::S3Object.value(path(style), bucket_name))
-          file.rewind
-
-          return file
+        def s3_download(key,file)
+          file.write(AWS::S3::S3Object.value(key, bucket_name))
         end
 
-        def s3_store(style,file)
+        def s3_store(key,file)
           begin
             AWS::S3::S3Object.store(
-              path(style),
+              key,
               file,
               bucket_name,
               {
@@ -152,9 +151,9 @@ module Paperclip
           end
         end
 
-        def s3_delete(path)
+        def s3_delete(key)
           begin
-            AWS::S3::S3Object.delete(path, bucket_name)
+            AWS::S3::S3Object.delete(key, bucket_name)
           rescue AWS::S3::ResponseError
             # Ignore this.
           end
@@ -212,7 +211,7 @@ module Paperclip
       end
       
       def expiring_url(time = 3600)
-        s3_expiring_url(time)
+        s3_expiring_url(path, time)
       end
 
       def bucket_name
@@ -239,7 +238,11 @@ module Paperclip
       end
       
       def exists?(style = default_style)
-        s3_exists?(style)
+        if original_filename
+          s3_exists?(path(style))
+        else
+          false
+        end
       end
 
       def s3_protocol
@@ -252,14 +255,20 @@ module Paperclip
         if @queued_for_write[style]
           @queued_for_write[style]
         else
-          s3_temp_file(style)
+          key = path(style)
+          file = Tempfile.new(key)
+
+          s3_download(key,file)
+
+          file.rewind
+          file
         end
       end
 
       def flush_writes #:nodoc:
         @queued_for_write.each do |style, file|
           log("saving #{path(style)}")
-          s3_store(style,file)
+          s3_store(path(style),file)
         end
 
         @queued_for_write = {}
