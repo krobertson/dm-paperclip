@@ -76,7 +76,7 @@ module Paperclip
     #   does not support directories, you can still use a / to separate
     #   parts of your file name.
     module S3
-      # Mixin which interfaces with the 'aws' library.
+      # Mixin which interfaces with the 'aws' and 'right_aws' libraries.
       module AwsLibrary
         protected
 
@@ -163,6 +163,7 @@ module Paperclip
       # Libraries and mixins that provide S3 support
       LIBRARIES = {
         'aws/s3' => AwsS3Library,
+        'right_aws' => AwsLibrary,
         'aws' => AwsLibrary
       }
 
