@@ -89,7 +89,7 @@ module Paperclip
         end
 
         def s3_expiring_url(key,time)
-          @s3.get_link(bucket_name,key,time)
+          @s3.interface.get_link(bucket_name,key,time)
         end
 
         def s3_exists?(key)
