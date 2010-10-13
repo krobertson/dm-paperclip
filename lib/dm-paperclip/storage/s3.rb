@@ -93,7 +93,7 @@ module Paperclip
         end
 
         def s3_exists?(key)
-          @s3_bucket.keys(:prefix => key).include?(key)
+          @s3_bucket.keys(:prefix => key).any? { |s3_key| s3_key.name == key }
         end
 
         def s3_download(key,file)
