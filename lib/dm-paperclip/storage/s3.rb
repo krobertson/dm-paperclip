@@ -1,3 +1,6 @@
+require 'dm-paperclip/storage/s3/aws_s3_library'
+require 'dm-paperclip/storage/s3/aws_library'
+
 module Paperclip
   module Storage
     # Amazon's S3 file hosting service is a scalable, easy place to store
@@ -76,90 +79,6 @@ module Paperclip
     #   does not support directories, you can still use a / to separate
     #   parts of your file name.
     module S3
-      # Mixin which interfaces with the 'aws' and 'right_aws' libraries.
-      module AwsLibrary
-        protected
-
-        def s3_connect!
-          @s3 = Aws::S3.new(
-            @s3_credentials[:access_key_id],
-            @s3_credentials[:secret_access_key]
-          )
-          @s3_bucket = @s3.bucket(bucket_name)
-        end
-
-        def s3_expiring_url(key,time)
-          @s3.interface.get_link(bucket_name,key,time)
-        end
-
-        def s3_exists?(key)
-          @s3_bucket.keys(:prefix => key).any? { |s3_key| s3_key.name == key }
-        end
-
-        def s3_download(key,file)
-          @s3_bucket.key(key).get { |chunk| file.write(chunk) }
-        end
-
-        def s3_store(key,file)
-          @s3_bucket.key(key).put(
-            file,
-            @s3_permissions.to_s.gsub('_','-')
-          )
-        end
-
-        def s3_delete(key)
-          @s3_bucket.key(key).delete
-        end
-      end
-
-      # Mixin which interfaces with the 'aws-s3' library.
-      module AwsS3Library
-        protected
-
-        def s3_connect!
-          AWS::S3::Base.establish_connection!(@s3_options.merge(
-            :access_key_id => @s3_credentials[:access_key_id],
-            :secret_access_key => @s3_credentials[:secret_access_key]
-          ))
-        end
-
-        def s3_expiring_url(key,time)
-          AWS::S3::S3Object.url_for(key, bucket_name, :expires_in => time)
-        end
-
-        def s3_exists?(key)
-          AWS::S3::S3Object.exists?(key, bucket_name)
-        end
-
-        def s3_download(key,file)
-          file.write(AWS::S3::S3Object.value(key, bucket_name))
-        end
-
-        def s3_store(key,file)
-          begin
-            AWS::S3::S3Object.store(
-              key,
-              file,
-              bucket_name,
-              {
-                :content_type => instance_read(:content_type),
-                :access => @s3_permissions,
-              }.merge(@s3_headers)
-            )
-          rescue AWS::S3::ResponseError => e
-            raise
-          end
-        end
-
-        def s3_delete(key)
-          begin
-            AWS::S3::S3Object.delete(key, bucket_name)
-          rescue AWS::S3::ResponseError
-            # Ignore this.
-          end
-        end
-      end
-
       # Libraries and mixins that provide S3 support
       LIBRARIES = {
         'aws/s3' => AwsS3Library,
@@ -298,7 +217,6 @@ module Paperclip
           raise ArgumentError, 'Credentials are not a path, file, or hash.'
         end
       end
-
     end
   end
 end
