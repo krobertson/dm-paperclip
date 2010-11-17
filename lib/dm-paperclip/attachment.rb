@@ -85,7 +85,7 @@ module Paperclip
         instance_write(:file_size,       uploaded_file['size'] ? uploaded_file['size'].to_i : uploaded_file['tempfile'].size.to_i)
         instance_write(:updated_at,      Time.now)
       else
-        @queued_for_write[:original]   = uploaded_file.to_tempfile
+        @queued_for_write[:original]   = uploaded_file.tempfile
         instance_write(:file_name,       uploaded_file.original_filename.strip.gsub(/[^\w\d\.\-]+/, '_'))
         instance_write(:content_type,    uploaded_file.content_type.to_s.strip)
         instance_write(:file_size,       uploaded_file.size.to_i)
