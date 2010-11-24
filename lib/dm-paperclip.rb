@@ -295,6 +295,7 @@ module Paperclip
       @attachment_definitions[name] = {:validations => []}.merge(options)
 
       property_options = options.delete_if { |k,v| ![ :public, :protected, :private, :accessor, :reader, :writer ].include?(key) }
+      property_options[:required] = false
 
       property :"#{name}_file_name",    String,   property_options.merge(:length => 255)
       property :"#{name}_content_type", String,   property_options.merge(:length => 255)
