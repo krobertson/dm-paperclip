@@ -67,7 +67,7 @@ module Paperclip
 
       def call(target)
         field_value = target.validation_property_value(@field_name)
-        if field_value.nil? || field_value.original_filename.blank?
+        if field_value.nil? || DataMapper::Ext.blank?(field_value.original_filename)
           error_message = @options[:message] || sprintf("%s must be set",ActiveSupport::Inflector.humanize(@field_name))
           add_error(target, error_message , @field_name)
           return false
@@ -86,8 +86,8 @@ module Paperclip
         valid_types = [@options[:content_type]].flatten
         field_value = target.validation_property_value(@field_name)
 
-        unless field_value.nil? || field_value.original_filename.blank?
-          unless @options[:content_type].blank?
+        unless field_value.nil? || DataMapper::Ext.blank?(field_value.original_filename)
+          unless DataMapper::Ext.blank?(@options[:content_type])
             content_type = target.validation_property_value(:"#{@field_name}_content_type")
             unless valid_types.any?{|t| t === content_type }
               error_message ||= @options[:message] unless @options[:message].nil?
@@ -110,7 +110,7 @@ module Paperclip
 
       def call(target)
         field_value = target.validation_property_value(@field_name)
-        unless field_value.nil? || field_value.original_filename.blank?
+        unless field_value.nil? || DataMapper::Ext.blank?(field_value.original_filename)
           return true if field_value.errors.length == 0
           field_value.errors.each { |message| add_error(target, message, @field_name) }
           return false

@@ -32,7 +32,7 @@ module Paperclip
 
     # Returns true if the image is meant to make use of additional convert options.
     def convert_options?
-      not @convert_options.blank?
+      not DataMapper::Ext.blank?(@convert_options)
     end
 
     # Performs the conversion of the +file+ into a thumbnail. Returns the Tempfile

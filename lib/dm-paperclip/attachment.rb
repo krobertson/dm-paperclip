@@ -236,7 +236,7 @@ module Paperclip
 
     # Returns true if a file has been assigned.
     def file?
-      !original_filename.blank?
+      !DataMapper::Ext.blank?(original_filename)
     end
 
     # Writes the attachment-specific attribute on the instance. For example,
@@ -301,7 +301,7 @@ module Paperclip
     def check_guard guard #:nodoc:
       if guard.respond_to? :call
         guard.call(instance)
-      elsif ! guard.blank?
+      elsif ! DataMapper::Ext.blank?(guard)
         instance.send(guard.to_s)
       end
     end
@@ -318,8 +318,8 @@ module Paperclip
 
     def validate_content_type options #:nodoc:
       valid_types = [options[:content_type]].flatten
-      unless original_filename.blank?
-        unless valid_types.blank?
+      unless DataMapper::Ext.blank?(original_filename)
+        unless DataMapper::Ext.blank?(valid_types)
           content_type = instance_read(:content_type)
           unless valid_types.any?{|t| content_type.nil? || t === content_type }
             options[:message] || "is not one of the allowed file types."
@@ -332,7 +332,7 @@ module Paperclip
       @styles.each do |name, args|
         unless args.is_a? Hash
           dimensions, format = [args, nil].flatten[0..1]
-          format             = nil if format.blank?
+          format             = nil if DataMapper::Ext.blank?(format)
           @styles[name]      = {
             :processors      => @processors,
             :geometry        => dimensions,
@@ -380,7 +380,7 @@ module Paperclip
     def post_process_styles #:nodoc:
       @styles.each do |name, args|
         begin
-          raise RuntimeError.new("Style #{name} has no processors defined.") if args[:processors].blank?
+          raise RuntimeError.new("Style #{name} has no processors defined.") if DataMapper::Ext.blank?(args[:processors])
           @queued_for_write[name] = args[:processors].inject(@queued_for_write[:original]) do |file, processor|
             Paperclip.processor(processor).make(file, args, self)
           end

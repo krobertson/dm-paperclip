@@ -319,7 +319,7 @@ module Paperclip
       end
 
       define_method "#{name}?" do
-        ! attachment_for(name).original_filename.blank?
+        ! DataMapper::Ext.blank?(attachment_for(name).original_filename)
       end
 
       if Paperclip.config.use_dm_validations
