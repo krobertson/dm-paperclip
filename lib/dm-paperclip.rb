@@ -170,7 +170,7 @@ module Paperclip
     end
 
     def processor name #:nodoc:
-      name = ActiveSupport::Inflector.classify(name.to_s)
+      name = DataMapper::Inflector.classify(name.to_s)
       processor = Paperclip.const_get(name)
       unless processor.ancestors.include?(Paperclip::Processor)
         raise PaperclipError.new("[paperclip] Processor #{name} was not found")

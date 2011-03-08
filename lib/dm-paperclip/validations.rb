@@ -51,9 +51,9 @@ module Paperclip
         return true if @options[:in].include? field_value.to_i
 
         error_message ||= @options[:message] unless @options[:message].nil?
-        error_message ||= sprintf("%s must be less than %s bytes",ActiveSupport::Inflector.humanize(@field_name), @options[:less_than]) unless @options[:less_than].nil?
-        error_message ||= sprintf("%s must be greater than %s bytes",ActiveSupport::Inflector.humanize(@field_name), @options[:greater_than]) unless @options[:greater_than].nil?
-        error_message ||= sprintf("%s must be between %s and %s bytes",ActiveSupport::Inflector.humanize(@field_name), @options[:in].first, @options[:in].last)
+        error_message ||= sprintf("%s must be less than %s bytes",DataMapper::Inflector.humanize(@field_name), @options[:less_than]) unless @options[:less_than].nil?
+        error_message ||= sprintf("%s must be greater than %s bytes",DataMapper::Inflector.humanize(@field_name), @options[:greater_than]) unless @options[:greater_than].nil?
+        error_message ||= sprintf("%s must be between %s and %s bytes",DataMapper::Inflector.humanize(@field_name), @options[:in].first, @options[:in].last)
         add_error(target, error_message , @field_name)
         return false
       end
@@ -68,7 +68,7 @@ module Paperclip
       def call(target)
         field_value = target.validation_property_value(@field_name)
         if field_value.nil? || DataMapper::Ext.blank?(field_value.original_filename)
-          error_message = @options[:message] || sprintf("%s must be set",ActiveSupport::Inflector.humanize(@field_name))
+          error_message = @options[:message] || sprintf("%s must be set",DataMapper::Inflector.humanize(@field_name))
           add_error(target, error_message , @field_name)
           return false
         end
@@ -91,7 +91,7 @@ module Paperclip
             content_type = target.validation_property_value(:"#{@field_name}_content_type")
             unless valid_types.any?{|t| t === content_type }
               error_message ||= @options[:message] unless @options[:message].nil?
-              error_message ||= sprintf("%s's content type of '%s' is not a valid content type",ActiveSupport::Inflector.humanize(@field_name), content_type)
+              error_message ||= sprintf("%s's content type of '%s' is not a valid content type",DataMapper::Inflector.humanize(@field_name), content_type)
               add_error(target, error_message , @field_name)
               return false
             end
