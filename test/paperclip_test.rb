@@ -21,7 +21,7 @@ class PaperclipTest < Test::Unit::TestCase
         include DataMapper::Resource
         include DataMapper::Validate
         include Paperclip::Resource
-        property :id, DataMapper::Types::Serial
+        property :id, DataMapper::Property::Serial
         property :other, String
         has_attached_file :file
       end
