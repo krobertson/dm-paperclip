@@ -39,7 +39,7 @@ module Paperclip
     # that contains the new image.
     def make
       src = @file
-      dst = Tempfile.new([@basename, @format].compact.join("."))
+      dst = Tempfile.new([@basename, @format ? ".#{@format}" : ''])
       dst.binmode
 
       command = <<-end_command
