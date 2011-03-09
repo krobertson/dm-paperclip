@@ -40,7 +40,7 @@ class ThumbnailTest < Test::Unit::TestCase
 
   context "An image" do
     setup do
-      @file = File.new(File.join(File.dirname(__FILE__), "fixtures", "5k.png"))
+      @file = File.new(File.join(File.dirname(__FILE__), "fixtures", "5k.png"), 'rb')
     end
 
     [["600x600>", "434x66"],
@@ -53,7 +53,7 @@ class ThumbnailTest < Test::Unit::TestCase
         end
 
         should "start with dimensions of 434x66" do
-          cmd = %Q[identify -format "%wx%h" #{@file.path}]
+          cmd = %Q[identify -format "%wx%h" "#{@file.path}"]
           assert_equal "434x66", `#{cmd}`.chomp
         end
 
@@ -67,7 +67,7 @@ class ThumbnailTest < Test::Unit::TestCase
           end
 
           should "be the size we expect it to be" do
-            cmd = %Q[identify -format "%wx%h" #{@thumb_result.path}]
+            cmd = %Q[identify -format "%wx%h" "#{@thumb_result.path}"]
             assert_equal args[1], `#{cmd}`.chomp
           end
         end
@@ -106,7 +106,7 @@ class ThumbnailTest < Test::Unit::TestCase
 
       should "create the thumbnail when sent #make" do
         dst = @thumb.make
-        assert_match /100x50/, `identify #{dst.path}`
+        assert_match /100x50/, `identify "#{dst.path}"`
       end
     end
 
@@ -129,7 +129,7 @@ class ThumbnailTest < Test::Unit::TestCase
 
       should "create the thumbnail when sent #make" do
         dst = @thumb.make
-        assert_match /100x50/, `identify #{dst.path}`
+        assert_match /100x50/, `identify "#{dst.path}"`
       end
 
       context "redefined to have bad convert_options setting" do

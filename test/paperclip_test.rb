@@ -4,7 +4,7 @@ class PaperclipTest < Test::Unit::TestCase
   context "A DataMapper model with an 'avatar' attachment" do
     setup do
       rebuild_model :path => "tmp/:class/omg/:style.:extension"
-      @file = File.new(File.join(FIXTURES_DIR, "5k.png"))
+      @file = File.new(File.join(FIXTURES_DIR, "5k.png"), 'rb')
     end
 
     should "not error when trying to also create a 'blah' attachment" do
@@ -136,7 +136,7 @@ class PaperclipTest < Test::Unit::TestCase
 
         context "and a valid file" do
           setup do
-            @file = args[2] && File.new(File.join(FIXTURES_DIR, args[2]))
+            @file = args[2] && File.new(File.join(FIXTURES_DIR, args[2]), 'rb')
           end
 
           should "not have any errors" do
@@ -148,7 +148,7 @@ class PaperclipTest < Test::Unit::TestCase
 
         context "and an invalid file" do
           setup do
-            @file = args[3] && File.new(File.join(FIXTURES_DIR, args[3]))
+            @file = args[3] && File.new(File.join(FIXTURES_DIR, args[3]), 'rb')
           end
 
           should "have errors" do

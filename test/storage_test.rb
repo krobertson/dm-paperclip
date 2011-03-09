@@ -267,7 +267,7 @@ class StorageTest < Test::Unit::TestCase
       Merb.env('test')
 
       rebuild_model :storage        => :s3,
-                    :s3_credentials => File.new(File.join(File.dirname(__FILE__), "fixtures/s3.yml"))
+                    :s3_credentials => File.new(File.join(File.dirname(__FILE__), "fixtures/s3.yml"), 'rb')
 
       Dummy.auto_migrate!
 
