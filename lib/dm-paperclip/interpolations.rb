@@ -82,7 +82,8 @@ module Paperclip
     # Returns the snake cased, pluralized version of the class name.
     # e.g. "users" for the User class.
     def class attachment, style
-      ActiveSupport::Inflector.underscore(attachment.instance.class.to_s).pluralize
+      name = DataMapper::Inflector.underscore(attachment.instance.class.to_s)
+      DataMapper::Inflector.pluralize(name)
     end
 
     # Returns the basename of the file. e.g. "file" for "file.jpg"
@@ -112,7 +113,7 @@ module Paperclip
     # Returns the pluralized form of the attachment name. e.g.
     # "avatars" for an attachment of :avatar
     def attachment attachment, style
-      attachment.name.to_s.downcase.pluralize
+      DataMapper::Inflector.pluralize(attachment.name.to_s.downcase)
     end
 
     # Returns the style, or the default style if nil is supplied.

@@ -30,6 +30,7 @@ require 'tempfile'
 
 require 'dm-core'
 
+require 'dm-paperclip/ext/class'
 require 'dm-paperclip/upfile'
 require 'dm-paperclip/iostream'
 require 'dm-paperclip/geometry'
@@ -170,7 +171,7 @@ module Paperclip
     end
 
     def processor name #:nodoc:
-      name = ActiveSupport::Inflector.classify(name.to_s)
+      name = DataMapper::Inflector.classify(name.to_s)
       processor = Paperclip.const_get(name)
       unless processor.ancestors.include?(Paperclip::Processor)
         raise PaperclipError.new("[paperclip] Processor #{name} was not found")
@@ -209,6 +210,7 @@ module Paperclip
 
     def self.included(base)
       base.extend Paperclip::ClassMethods
+      base.extend Paperclip::Ext::Class::Hook
 
       # Done at this time to ensure that the user
       # had a chance to configure the app in an initializer
@@ -283,16 +285,8 @@ module Paperclip
     def has_attached_file name, options = {}
       include InstanceMethods
 
-      class << self
-        attr_reader :attachment_definitions
-
-        def attachment_definitions=(opts)
-          @attachment_definitions = opts
-        end
-      end
-
-      @attachment_definitions = {} unless @attachment_definitions
-      @attachment_definitions[name] = {:validations => []}.merge(options)
+      Paperclip::Ext::Class.write_inheritable_attribute(self, :attachment_definitions, {}) if attachment_definitions.nil?
+      attachment_definitions[name] = {:validations => []}.merge(options)
 
       property_options = options.delete_if { |k,v| ![ :public, :protected, :private, :accessor, :reader, :writer ].include?(key) }
       property_options[:required] = false
@@ -319,7 +313,7 @@ module Paperclip
       end
 
       define_method "#{name}?" do
-        ! attachment_for(name).original_filename.blank?
+        ! DataMapper::Ext.blank?(attachment_for(name).original_filename)
       end
 
       if Paperclip.config.use_dm_validations
@@ -331,7 +325,7 @@ module Paperclip
     # Returns the attachment definitions defined by each call to
     # has_attached_file.
     def attachment_definitions
-      read_inheritable_attribute(:attachment_definitions)
+      Paperclip::Ext::Class.read_inheritable_attribute(self, :attachment_definitions)
     end
   end
 

@@ -1,3 +1,4 @@
+require 'test/helper'
 require 'rubygems'
 require 'test/unit'
 require 'shoulda'
@@ -11,7 +12,7 @@ class ThumbnailTest < Test::Unit::TestCase
 
   context "A Paperclip Tempfile" do
     setup do
-      @tempfile = Paperclip::Tempfile.new("file.jpg")
+      @tempfile = Paperclip::Tempfile.new(["file", ".jpg"])
     end
 
     should "have its path contain a real extension" do

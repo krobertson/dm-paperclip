@@ -281,7 +281,7 @@ class StorageTest < Test::Unit::TestCase
     end
   end
 
-  unless ENV["S3_TEST_BUCKET"].blank?
+  unless DataMapper::Ext.blank?(ENV["S3_TEST_BUCKET"])
     context "Using S3 for real, an attachment with S3 storage" do
       setup do
         rebuild_model :styles => { :thumb => "100x100", :square => "32x32#" },
