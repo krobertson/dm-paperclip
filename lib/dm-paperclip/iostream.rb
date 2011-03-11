@@ -1,12 +1,11 @@
 # Provides method that can be included on File-type objects (IO, StringIO, Tempfile, etc) to allow stream copying
 # and Tempfile conversion.
 module IOStream
-
   # Returns a Tempfile containing the contents of the readable object.
   def to_tempfile(object)
     return object.to_tempfile if object.respond_to?(:to_tempfile)
     name = object.respond_to?(:original_filename) ? object.original_filename : (object.respond_to?(:path) ? object.path : "stream")
-    tempfile = Paperclip::Tempfile.new(File.basename(name))
+    tempfile = Paperclip::Tempfile.new(["stream", File.extname(name)])
     tempfile.binmode
     stream_to(object, tempfile)
   end
@@ -25,7 +24,7 @@ module IOStream
     while object.read(in_blocks_of, buffer) do
       dstio.write(buffer)
     end
-    dstio.rewind    
+    dstio.rewind
     dstio
   end
 end

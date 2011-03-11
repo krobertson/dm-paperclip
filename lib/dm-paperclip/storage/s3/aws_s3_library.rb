@@ -24,6 +24,10 @@ module Paperclip
           file.write(AWS::S3::S3Object.value(key, bucket_name))
         end
 
+        def s3_create_bucket
+          AWS::S3::Bucket.create(bucket_name)
+        end
+
         def s3_store(key,file)
           begin
             AWS::S3::S3Object.store(
@@ -35,6 +39,9 @@ module Paperclip
                 :access => @s3_permissions,
               }.merge(@s3_headers)
             )
+          rescue AWS::S3::NoSuchBucket => e
+            s3_create_bucket
+            retry
           rescue AWS::S3::ResponseError => e
             raise
           end
