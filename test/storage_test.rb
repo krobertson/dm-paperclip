@@ -1,8 +1,31 @@
-if false
-require 'test/helper'
+require './test/helper'
 require 'aws/s3'
 
 class StorageTest < Test::Unit::TestCase
+
+  context "filesystem" do
+    setup do
+      rebuild_model :styles => { :thumbnail => "25x25#" }
+      @dummy = Dummy.create!
+
+      @dummy.avatar = File.open(File.join(File.dirname(__FILE__), "fixtures", "5k.png"))
+    end
+    
+    should "allow file assignment" do
+      assert @dummy.save
+    end
+    
+    should "store the original" do
+      @dummy.save
+      assert File.exists?(@dummy.avatar.path)
+    end
+    
+    should "store the thumbnail" do
+      @dummy.save
+      assert File.exists?(@dummy.avatar.path(:thumbnail))
+    end
+  end
+
   context "Parsing S3 credentials" do
     setup do
       AWS::S3::Base.stubs(:establish_connection!)
@@ -13,29 +36,29 @@ class StorageTest < Test::Unit::TestCase
       @dummy = Dummy.new
       @avatar = @dummy.avatar
 
-      @current_env = Merb.env
+      @old_env = Paperclip.config.env
     end
 
     teardown do
-      Merb.env(@current_env)
+      Paperclip.config.env = @old_env
     end
 
     should "get the correct credentials when environment is production" do
-      Merb.env("production")
+      Paperclip.config.env = "production"
       assert_equal({:key => "12345"},
                    @avatar.parse_credentials('production' => {:key => '12345'},
                                              :development => {:key => "54321"}))
     end
 
     should "get the correct credentials when environment is development" do
-      Merb.env("development")
+      Paperclip.config.env = "development"
       assert_equal({:key => "54321"},
                    @avatar.parse_credentials('production' => {:key => '12345'},
                                              :development => {:key => "54321"}))
     end
 
     should "return the argument if the key does not exist" do
-      Merb.env("not really an env")
+      Paperclip.config.env = "not really an env"
       assert_equal({:test => "12345"}, @avatar.parse_credentials(:test => "12345"))
     end
   end
@@ -91,7 +114,7 @@ class StorageTest < Test::Unit::TestCase
       assert_match %r{^http://something.something.com/avatars/stringio.txt}, @dummy.avatar.url
     end
   end
-  
+
   context "Generating a url with an expiration" do
     setup do
       AWS::S3::Base.stubs(:establish_connection!)
@@ -103,17 +126,22 @@ class StorageTest < Test::Unit::TestCase
                     :s3_host_alias => "something.something.com",
                     :path => ":attachment/:basename.:extension",
                     :url => ":s3_alias_url"
-                    
-      Merb.env("production")
-      
+
+      @old_env = Paperclip.config.env
+      Paperclip.config.env = "production"
+
       @dummy = Dummy.new
       @dummy.avatar = StringIO.new(".")
-      
+
       AWS::S3::S3Object.expects(:url_for).with("avatars/stringio.txt", "prod_bucket", { :expires_in => 3600 })
-      
+
       @dummy.avatar.expiring_url
     end
-    
+
+    teardown do
+      Paperclip.config.env = @old_env
+    end
+
     should "should succeed" do
       assert true
     end
@@ -128,18 +156,20 @@ class StorageTest < Test::Unit::TestCase
                       :development  => { :bucket => "dev_bucket" }
                     }
       @dummy = Dummy.new
-      @old_env = Merb.env
+      @old_env = Paperclip.config.env
     end
 
-    teardown{ Merb.env(@old_env) }
+    teardown do
+      Paperclip.config.env = @old_env
+    end
 
     should "get the right bucket in production" do
-      Merb.env("production")
+      Paperclip.config.env = "production"
       assert_equal "prod_bucket", @dummy.avatar.bucket_name
     end
 
     should "get the right bucket in development" do
-      Merb.env("development")
+      Paperclip.config.env = "development"
       assert_equal "dev_bucket", @dummy.avatar.bucket_name
     end
   end
@@ -188,7 +218,22 @@ class StorageTest < Test::Unit::TestCase
           assert true
         end
       end
-      
+
+      context "and saved without a bucket" do
+        setup do
+          class AWS::S3::NoSuchBucket < AWS::S3::ResponseError
+            # Force the class to be created as a proper subclass of ResponseError thanks to AWS::S3's autocreation of exceptions
+          end
+          AWS::S3::Bucket.expects(:create).with("testing")
+          AWS::S3::S3Object.stubs(:store).raises(AWS::S3::NoSuchBucket.new(:message, :response)).then.returns(true)
+          @dummy.save
+        end
+
+        should "succeed" do
+          assert true
+        end
+      end
+
       context "and remove" do
         setup do
           AWS::S3::S3Object.stubs(:exists?).returns(true)
@@ -202,7 +247,7 @@ class StorageTest < Test::Unit::TestCase
       end
     end
   end
-  
+
   context "An attachment with S3 storage and bucket defined as a Proc" do
     setup do
       AWS::S3::Base.stubs(:establish_connection!)
@@ -210,7 +255,7 @@ class StorageTest < Test::Unit::TestCase
                     :bucket => lambda { |attachment| "bucket_#{attachment.instance.other}" },
                     :s3_credentials => {:not => :important}
     end
-    
+
     should "get the right bucket name" do
       assert "bucket_a", Dummy.new(:other => 'a').avatar.bucket_name
       assert "bucket_b", Dummy.new(:other => 'b').avatar.bucket_name
@@ -256,6 +301,33 @@ class StorageTest < Test::Unit::TestCase
         end
       end
     end
+  end
+
+  context "with S3 credentials supplied as Pathname" do
+     setup do
+       ENV['S3_KEY']    = 'pathname_key'
+       ENV['S3_BUCKET'] = 'pathname_bucket'
+       ENV['S3_SECRET'] = 'pathname_secret'
+
+       @old_env = Paperclip.config.env
+       Paperclip.config.env = 'test'
+
+       rebuild_model :storage        => :s3,
+                     :s3_credentials => Pathname.new(File.join(File.dirname(__FILE__))).join("fixtures/s3.yml")
+
+       Dummy.auto_migrate!
+       @dummy = Dummy.new
+     end
+
+    teardown do
+      Paperclip.config.env = @old_env
+    end
+
+     should "parse the credentials" do
+       assert_equal 'pathname_bucket', @dummy.avatar.bucket_name
+       assert_equal 'pathname_key', AWS::S3::Base.connection.options[:access_key_id]
+       assert_equal 'pathname_secret', AWS::S3::Base.connection.options[:secret_access_key]
+     end
   end
 
   context "with S3 credentials in a YAML file" do
@@ -307,7 +379,7 @@ class StorageTest < Test::Unit::TestCase
         teardown { @file.close }
 
         should "still return a Tempfile when sent #to_file" do
-          assert_equal Tempfile, @dummy.avatar.to_file.class
+          assert_equal Paperclip::Tempfile, @dummy.avatar.to_file.class
         end
 
         context "and saved" do
@@ -318,9 +390,13 @@ class StorageTest < Test::Unit::TestCase
           should "be on S3" do
             assert true
           end
+
+          should "generate a tempfile with the right name" do
+            file = @dummy.avatar.to_file
+            assert_match /^original.*\.png$/, File.basename(file.path)
+          end
         end
       end
     end
   end
-end
 end

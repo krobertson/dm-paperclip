@@ -46,7 +46,7 @@ module Paperclip
         field_value = target.validation_property_value(:"#{@field_name}_file_size")
         return true if field_value.nil?
 
-        @options[:in] = (@options[:greater_than]..(1/0)) unless @options[:greater_than].nil?
+        @options[:in] = (@options[:greater_than]..(1.0/0)) unless @options[:greater_than].nil?
         @options[:in] = (0..@options[:less_than])        unless @options[:less_than].nil?
         return true if @options[:in].include? field_value.to_i
 
@@ -112,7 +112,9 @@ module Paperclip
         field_value = target.validation_property_value(@field_name)
         unless field_value.nil? || DataMapper::Ext.blank?(field_value.original_filename)
           return true if field_value.errors.length == 0
-          field_value.errors.each { |message| add_error(target, message, @field_name) }
+          field_value.errors.each do |error, message|
+            [message].flatten.each { |m| add_error(target, m, @field_name) }
+          end
           return false
         end
         return true

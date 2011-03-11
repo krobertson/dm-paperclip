@@ -16,19 +16,19 @@ module Paperclip
     #
     #     development:
     #       access_key_id: 123...
-    #       secret_access_key: 123... 
+    #       secret_access_key: 123...
     #     test:
     #       access_key_id: abc...
-    #       secret_access_key: abc... 
+    #       secret_access_key: abc...
     #     production:
     #       access_key_id: 456...
-    #       secret_access_key: 456... 
+    #       secret_access_key: 456...
     #
     #   This is not required, however, and the file may simply look like
     #   this:
     #
     #     access_key_id: 456...
-    #     secret_access_key: 456... 
+    #     secret_access_key: 456...
     #
     #   In which case, those access keys will be used in all environments.
     #   You can also put your bucket name in this file, instead of adding
@@ -105,31 +105,31 @@ module Paperclip
 
         base.instance_eval do
           @s3_credentials = parse_credentials(@options[:s3_credentials])
-          @bucket         = (@options[:bucket] || @s3_credentials[:bucket])
+          @bucket         = @options[:bucket]         || @s3_credentials[:bucket]
           @bucket         = @bucket.call(self) if @bucket.is_a?(Proc)
-          @s3_options     = (@options[:s3_options] || {})
-          @s3_permissions = (@options[:s3_permissions] || :public_read)
-          @s3_protocol    = (@options[:s3_protocol] || (@s3_permissions == :public_read ? 'http' : 'https'))
-          @s3_headers     = (@options[:s3_headers] || {})
+          @s3_options     = @options[:s3_options]     || {}
+          @s3_permissions = @options[:s3_permissions] || :public_read
+          @s3_protocol    = @options[:s3_protocol]    || (@s3_permissions == :public_read ? 'http' : 'https')
+          @s3_headers     = @options[:s3_headers]     || {}
           @s3_host_alias  = @options[:s3_host_alias]
-          @url            = ':s3_path_url' unless @url.to_s.match(/^:s3.*url$/)
+          unless @url.to_s.match(/^:s3.*url$/)
+            @path          = @path.gsub(/:url/, @url)
+            @url           = ":s3_path_url"
+          end
 
           s3_connect!
         end
-
         Paperclip.interpolates(:s3_alias_url) do |attachment, style|
-          "#{attachment.s3_protocol}://#{attachment.s3_host_alias}/#{attachment.path(style).gsub(%r{^/}, '')}"
-        end
-
+          "#{attachment.s3_protocol}://#{attachment.s3_host_alias}/#{attachment.path(style).gsub(%r{^/}, "")}"
+        end unless Paperclip::Interpolations.respond_to? :s3_alias_url
         Paperclip.interpolates(:s3_path_url) do |attachment, style|
-          "#{attachment.s3_protocol}://s3.amazonaws.com/#{attachment.bucket_name}/#{attachment.path(style).gsub(%r{^/}, '')}"
-        end
-
+          "#{attachment.s3_protocol}://s3.amazonaws.com/#{attachment.bucket_name}/#{attachment.path(style).gsub(%r{^/}, "")}"
+        end unless Paperclip::Interpolations.respond_to? :s3_path_url
         Paperclip.interpolates(:s3_domain_url) do |attachment, style|
-          "#{attachment.s3_protocol}://#{attachment.bucket_name}.s3.amazonaws.com/#{attachment.path(style).gsub(%r{^/}, '')}"
-        end
+          "#{attachment.s3_protocol}://#{attachment.bucket_name}.s3.amazonaws.com/#{attachment.path(style).gsub(%r{^/}, "")}"
+        end unless Paperclip::Interpolations.respond_to? :s3_domain_url
       end
-      
+
       def expiring_url(time = 3600)
         s3_expiring_url(path, time)
       end
@@ -143,20 +143,10 @@ module Paperclip
       end
 
       def parse_credentials(creds)
-        creds = find_credentials(creds).to_mash.stringify_keys!
-        if defined?(Merb) && Merb.respond_to?(:env)
-          (creds[Merb.env] || creds).symbolize_keys
-        elsif defined?(RAILS_ENV)
-          (creds[RAILS_ENV] || creds).symbolize_keys
-        elsif defined?(Rails) && Rails.respond_to(:env)
-          (creds[Rails.env] || creds).symbolize_keys
-        elsif defined?(RACK_ENV)
-          (creds[RACK_ENV] || creds).symbolize_keys
-        else
-          creds.symbolize_keys
-        end
+        creds = DataMapper::Mash.new(find_credentials(creds)).stringify_keys!
+        (creds[Paperclip.config.env] || creds).symbolize_keys
       end
-      
+
       def exists?(style = default_style)
         if original_filename
           s3_exists?(path(style))
@@ -171,18 +161,16 @@ module Paperclip
 
       # Returns representation of the data of the file assigned to the given
       # style, in the format most representative of the current storage.
-      def to_file(style = default_style)
-        if @queued_for_write[style]
-          @queued_for_write[style]
-        else
-          key = path(style)
-          file = Tempfile.new(key)
-
-          s3_download(key,file)
-
-          file.rewind
-          file
-        end
+      def to_file style = default_style
+        return @queued_for_write[style] if @queued_for_write[style]
+        filename = path(style)
+        extname  = File.extname(filename)
+        basename = File.basename(filename, extname)
+        file = Tempfile.new([basename, extname])
+        file.binmode
+        s3_download(filename,file)
+        file.rewind
+        return file
       end
 
       def flush_writes #:nodoc:
@@ -199,24 +187,23 @@ module Paperclip
           log("deleting #{path}")
           s3_delete(path)
         end
-
         @queued_for_delete = []
       end
 
-      private
-      
-      def find_credentials(creds)
+      def find_credentials creds
         case creds
         when File
           YAML::load(ERB.new(File.read(creds.path)).result)
-        when Pathname, String
+        when String, Pathname
           YAML::load(ERB.new(File.read(creds)).result)
         when Hash
           creds
         else
-          raise ArgumentError, 'Credentials are not a path, file, or hash.'
+          raise ArgumentError, "Credentials are not a path, file, or hash."
         end
       end
+      private :find_credentials
+
     end
   end
 end

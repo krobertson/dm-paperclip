@@ -1,8 +1,7 @@
-require 'test/helper'
+require './test/helper'
 
 class IOStreamTest < Test::Unit::TestCase
   include IOStream
-
   context "A file" do
     setup do
       @file = File.new(File.join(File.dirname(__FILE__), "fixtures", "5k.png"), 'rb')
@@ -60,7 +59,7 @@ class IOStreamTest < Test::Unit::TestCase
         name = File.basename(@file.path)
         extension = File.extname(name)
         basename = File.basename(name, extension)
-        assert_match %r[^#{Regexp.quote(basename)}.*?#{Regexp.quote(extension)}], File.basename(@tempfile.path)
+        assert_match %r[^stream.*?#{Regexp.quote(extension)}], File.basename(@tempfile.path)
       end
 
       should "have the Tempfile contain the same data as the file" do
