@@ -441,62 +441,62 @@ class AttachmentTest < Test::Unit::TestCase
     end
   end
 
-  #context "Assigning an attachment with post_process hooks" do
-  #  setup do
-  #    rebuild_class :styles => { :something => "100x100#" }
-  #    Dummy.class_eval do
-  #      #before_avatar_post_process :do_before_avatar
-  #      #after_avatar_post_process :do_after_avatar
-  #      #before_post_process :do_before_all
-  #      #after_post_process :do_after_all
-  #      def do_before_avatar; end
-  #      def do_after_avatar; end
-  #      def do_before_all; end
-  #      def do_after_all; end
-  #    end
-  #    @file  = StringIO.new(".")
-  #    @file.stubs(:to_tempfile).returns(@file)
-  #    @dummy = Dummy.new
-  #    Paperclip::Thumbnail.stubs(:make).returns(@file)
-  #    @attachment = @dummy.avatar
-  #  end
-  #
-  #  should "call the defined callbacks when assigned" do
-  #    @dummy.expects(:do_before_avatar).with()
-  #    @dummy.expects(:do_after_avatar).with()
-  #    @dummy.expects(:do_before_all).with()
-  #    @dummy.expects(:do_after_all).with()
-  #    Paperclip::Thumbnail.expects(:make).returns(@file)
-  #    @dummy.avatar = @file
-  #  end
-  #
-  #  should "not cancel the processing if a before_post_process returns nil" do
-  #    @dummy.expects(:do_before_avatar).with().returns(nil)
-  #    @dummy.expects(:do_after_avatar).with()
-  #    @dummy.expects(:do_before_all).with().returns(nil)
-  #    @dummy.expects(:do_after_all).with()
-  #    Paperclip::Thumbnail.expects(:make).returns(@file)
-  #    @dummy.avatar = @file
-  #  end
-  #
-  #  should "cancel the processing if a before_post_process returns false" do
-  #    @dummy.expects(:do_before_avatar).never
-  #    @dummy.expects(:do_after_avatar).never
-  #    @dummy.expects(:do_before_all).with().returns(false)
-  #    @dummy.expects(:do_after_all)
-  #    Paperclip::Thumbnail.expects(:make).never
-  #    @dummy.avatar = @file
-  #  end
-  #
-  #  should "cancel the processing if a before_avatar_post_process returns false" do
-  #    @dummy.expects(:do_before_avatar).with().returns(false)
-  #    @dummy.expects(:do_after_avatar)
-  #    @dummy.expects(:do_before_all).with().returns(true)
-  #    @dummy.expects(:do_after_all)
-  #    Paperclip::Thumbnail.expects(:make).never
-  #    @dummy.avatar = @file
-  #  end
-  #end
+  context "Assigning an attachment with post_process hooks" do
+    setup do
+      rebuild_class :styles => { :something => "100x100#" }
+      Dummy.class_eval do
+        before_avatar_post_process :do_before_avatar
+        after_avatar_post_process :do_after_avatar
+        before_post_process :do_before_all
+        after_post_process :do_after_all
+        def do_before_avatar; end
+        def do_after_avatar; end
+        def do_before_all; end
+        def do_after_all; end
+      end
+      @file  = StringIO.new(".")
+      @file.stubs(:to_tempfile).returns(@file)
+      @dummy = Dummy.new
+      Paperclip::Thumbnail.stubs(:make).returns(@file)
+      @attachment = @dummy.avatar
+    end
+
+    should "call the defined callbacks when assigned" do
+      @dummy.expects(:do_before_avatar).with()
+      @dummy.expects(:do_after_avatar).with()
+      @dummy.expects(:do_before_all).with()
+      @dummy.expects(:do_after_all).with()
+      Paperclip::Thumbnail.expects(:make).returns(@file)
+      @dummy.avatar = @file
+    end
+
+    should "not cancel the processing if a before_post_process returns nil" do
+      @dummy.expects(:do_before_avatar).with().returns(nil)
+      @dummy.expects(:do_after_avatar).with()
+      @dummy.expects(:do_before_all).with().returns(nil)
+      @dummy.expects(:do_after_all).with()
+      Paperclip::Thumbnail.expects(:make).returns(@file)
+      @dummy.avatar = @file
+    end
+
+    should "cancel the processing if a before_post_process returns false" do
+      @dummy.expects(:do_before_avatar).never
+      @dummy.expects(:do_after_avatar).never
+      @dummy.expects(:do_before_all).with().returns(false)
+      @dummy.expects(:do_after_all).never
+      Paperclip::Thumbnail.expects(:make).never
+      @dummy.avatar = @file
+    end
+
+    should "cancel the processing if a before_avatar_post_process returns false" do
+      @dummy.expects(:do_before_avatar).with().returns(false)
+      @dummy.expects(:do_after_avatar).never
+      @dummy.expects(:do_before_all).with().returns(true)
+      @dummy.expects(:do_after_all).never
+      Paperclip::Thumbnail.expects(:make).never
+      @dummy.avatar = @file
+    end
+  end
 
   context "Assigning an attachment" do
     setup do

@@ -31,6 +31,7 @@ require 'tempfile'
 
 require 'dm-core'
 
+require 'dm-paperclip/ext/compatibility'
 require 'dm-paperclip/ext/class'
 require 'dm-paperclip/version'
 require 'dm-paperclip/upfile'
@@ -43,6 +44,7 @@ require 'dm-paperclip/style'
 require 'dm-paperclip/attachment'
 require 'dm-paperclip/storage'
 require 'dm-paperclip/command_line'
+require 'dm-paperclip/callbacks'
 
 # The base module that gets included in ActiveRecord::Base. See the
 # documentation for Paperclip::ClassMethods for more useful information.
@@ -318,9 +320,8 @@ module Paperclip
       after :save, :save_attached_files
       before :destroy, :destroy_attached_files
 
-      # not needed with extlib just do before :post_process, or after :post_process
-      # define_callbacks :before_post_process, :after_post_process
-      # define_callbacks :"before_#{name}_post_process", :"after_#{name}_post_process"
+      Paperclip::Callbacks.define(self, "post_process")
+      Paperclip::Callbacks.define(self, "#{name}_post_process")
 
       define_method name do |*args|
         a = attachment_for(name)

@@ -404,7 +404,11 @@ module Paperclip
 
     def post_process(*style_args) #:nodoc:
       return if @queued_for_write[:original].nil?
-      post_process_styles(*style_args)
+      Paperclip::Callbacks.run(instance, 'post_process') do
+        Paperclip::Callbacks.run(instance, "#{name}_post_process") do
+          post_process_styles(*style_args)
+        end
+      end
     end
 
     def post_process_styles(*style_args) #:nodoc:
