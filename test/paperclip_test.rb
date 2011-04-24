@@ -226,7 +226,7 @@ class PaperclipTest < Test::Unit::TestCase
             end
           else
             should "not have an error on the attachment" do
-              assert DataMapper::Ext.blank?(@dummy.errors), @dummy.errors.full_messages.join(", ")
+              assert Paperclip::Ext.blank?(@dummy.errors), @dummy.errors.full_messages.join(", ")
             end
           end
         end

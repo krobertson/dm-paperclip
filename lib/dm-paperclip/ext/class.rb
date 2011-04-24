@@ -32,7 +32,7 @@ module Paperclip; module Ext
             ::Paperclip::Ext::Class::EMPTY_INHERITABLE_ATTRIBUTES
           else
             attributes.inject({}) do |memo, (key, value)|
-              memo[key] = ::DataMapper::Ext.try_dup(value.dup)
+              memo[key] = ::Paperclip::Ext.try_dup(value.dup)
               memo
             end
           end

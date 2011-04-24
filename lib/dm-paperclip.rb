@@ -33,6 +33,8 @@ require 'dm-core'
 
 require 'dm-paperclip/ext/compatibility'
 require 'dm-paperclip/ext/class'
+require 'dm-paperclip/ext/blank'
+require 'dm-paperclip/ext/try_dup'
 require 'dm-paperclip/version'
 require 'dm-paperclip/upfile'
 require 'dm-paperclip/iostream'

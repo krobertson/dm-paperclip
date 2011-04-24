@@ -291,7 +291,7 @@ module Paperclip
 
     # Returns true if a file has been assigned.
     def file?
-      !DataMapper::Ext.blank?(original_filename)
+      !Paperclip::Ext.blank?(original_filename)
     end
 
     # Writes the attachment-specific attribute on the instance. For example,
@@ -356,7 +356,7 @@ module Paperclip
     def check_guard guard #:nodoc:
       if guard.respond_to? :call
         guard.call(instance)
-      elsif ! DataMapper::Ext.blank?(guard)
+      elsif ! Paperclip::Ext.blank?(guard)
         instance.send(guard.to_s)
       end
     end
@@ -373,8 +373,8 @@ module Paperclip
 
     def validate_content_type options #:nodoc:
       valid_types = [options[:content_type]].flatten
-      unless DataMapper::Ext.blank?(original_filename)
-        unless DataMapper::Ext.blank?(valid_types)
+      unless Paperclip::Ext.blank?(original_filename)
+        unless Paperclip::Ext.blank?(valid_types)
           content_type = instance_read(:content_type)
           unless valid_types.any?{|t| content_type.nil? || t === content_type }
             options[:message] || "is not one of the allowed file types."

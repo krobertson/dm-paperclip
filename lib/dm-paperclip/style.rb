@@ -23,7 +23,7 @@ module Paperclip
         @geometry, @format = [definition, nil].flatten[0..1]
         @other_args = {}
       end
-      @format  = nil if DataMapper::Ext.blank?(@format)
+      @format  = nil if Paperclip::Ext.blank?(@format)
     end
 
     # retrieves from the attachment the processors defined in the has_attached_file call
