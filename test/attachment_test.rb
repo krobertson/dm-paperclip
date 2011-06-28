@@ -1,5 +1,4 @@
-require 'test/helper'
-
+require File.expand_path(File.join(File.dirname(__FILE__), 'helper'))
 class Dummy
   # This is a dummy class
 end
