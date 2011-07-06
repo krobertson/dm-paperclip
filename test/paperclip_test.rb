@@ -1,4 +1,4 @@
-require 'test/helper.rb'
+require File.expand_path(File.join(File.dirname(__FILE__), 'helper'))
 
 class PaperclipTest < Test::Unit::TestCase
   context "A DataMapper model with an 'avatar' attachment" do
