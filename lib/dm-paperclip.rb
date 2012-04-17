@@ -26,26 +26,31 @@
 # See the +has_attached_file+ documentation for more details.
 
 require 'erb'
+require 'digest'
 require 'tempfile'
 
-require 'extlib'
 require 'dm-core'
 
+require 'dm-paperclip/ext/compatibility'
+require 'dm-paperclip/ext/class'
+require 'dm-paperclip/ext/blank'
+require 'dm-paperclip/ext/try_dup'
+require 'dm-paperclip/version'
 require 'dm-paperclip/upfile'
 require 'dm-paperclip/iostream'
 require 'dm-paperclip/geometry'
 require 'dm-paperclip/processor'
 require 'dm-paperclip/thumbnail'
-require 'dm-paperclip/storage'
 require 'dm-paperclip/interpolations'
+require 'dm-paperclip/style'
 require 'dm-paperclip/attachment'
+require 'dm-paperclip/storage'
+require 'dm-paperclip/command_line'
+require 'dm-paperclip/callbacks'
 
 # The base module that gets included in ActiveRecord::Base. See the
 # documentation for Paperclip::ClassMethods for more useful information.
 module Paperclip
-
-  VERSION = "2.4.1"
-
   # To configure Paperclip, put this code in an initializer, Rake task, or wherever:
   #
   #   Paperclip.configure do |config|
@@ -104,12 +109,12 @@ module Paperclip
   class << self
 
     # Provides configurability to Paperclip. There are a number of options available, such as:
-    # * whiny: Will raise an error if Paperclip cannot process thumbnails of 
+    # * whiny: Will raise an error if Paperclip cannot process thumbnails of
     #   an uploaded image. Defaults to true.
     # * log: Logs progress to the Rails log. Uses ActiveRecord's logger, so honors
     #   log levels, etc. Defaults to true.
     # * command_path: Defines the path at which to find the command line
-    #   programs if they are not visible to Rails the system's search path. Defaults to 
+    #   programs if they are not visible to Rails the system's search path. Defaults to
     #   nil, which uses the first executable found in the user's search path.
     # * image_magick_path: Deprecated alias of command_path.
     def options
@@ -118,7 +123,7 @@ module Paperclip
         :image_magick_path => nil,
         :command_path      => nil,
         :log               => true,
-        :log_command       => false,
+        :log_command       => true,
         :swallow_stderr    => true
       }
     end
@@ -135,7 +140,7 @@ module Paperclip
       Paperclip::Interpolations[key] = block
     end
 
-    # The run method takes a command to execute and a string of parameters
+    # The run method takes a command to execute and an array of parameters
     # that get passed to it. The command is prefixed with the :command_path
     # option from Paperclip.options. If you have many commands to run and
     # they are in different paths, the suggested course of action is to
@@ -144,23 +149,19 @@ module Paperclip
     # If the command returns with a result code that is not one of the
     # expected_outcodes, a PaperclipCommandLineError will be raised. Generally
     # a code of 0 is expected, but a list of codes may be passed if necessary.
+    # These codes should be passed as a hash as the last argument, like so:
     #
-    # This method can log the command being run when 
+    #   Paperclip.run("echo", "something", :expected_outcodes => [0,1,2,3])
+    #
+    # This method can log the command being run when
     # Paperclip.options[:log_command] is set to true (defaults to false). This
     # will only log if logging in general is set to true as well.
-    def run cmd, params = "", expected_outcodes = 0
-      command = %Q<#{%Q[#{path_for_command(cmd)} #{params}].gsub(/\s+/, " ")}>
-      command = "#{command} 2>#{bit_bucket}" if Paperclip.options[:swallow_stderr]
-      Paperclip.log(command) if Paperclip.options[:log_command]
-      output = `#{command}`
-      unless [expected_outcodes].flatten.include?($?.exitstatus)
-        raise PaperclipCommandLineError, "Error while running #{cmd}"
+    def run cmd, *params
+      if options[:image_magick_path]
+        Paperclip.log("[DEPRECATION] :image_magick_path is deprecated and will be removed. Use :command_path instead")
       end
-      output
-    end
-
-    def bit_bucket #:nodoc:
-      File.exists?("/dev/null") ? "/dev/null" : "NUL"
+      CommandLine.path = options[:command_path] || options[:image_magick_path]
+      CommandLine.new(cmd, *params).run
     end
 
     def included base #:nodoc:
@@ -171,12 +172,18 @@ module Paperclip
     end
 
     def processor name #:nodoc:
-      name = name.to_s.camel_case
+      name = DataMapper::Inflector.classify(name.to_s)
       processor = Paperclip.const_get(name)
       unless processor.ancestors.include?(Paperclip::Processor)
         raise PaperclipError.new("[paperclip] Processor #{name} was not found")
       end
       processor
+    end
+
+    def each_instance_with_attachment(klass, name)
+      Object.const_get(klass).all.each do |instance|
+        yield(instance) if instance.send(:"#{name}?")
+      end
     end
 
     # Log a paperclip-specific line. Uses ActiveRecord::Base.logger
@@ -197,31 +204,30 @@ module Paperclip
   class PaperclipError < StandardError #:nodoc:
   end
 
-  class PaperclipCommandLineError < StandardError #:nodoc:
+  class PaperclipCommandLineError < PaperclipError #:nodoc:
+    attr_accessor :output
+    def initialize(msg = nil, output = nil)
+      super(msg)
+      @output = output
+    end
+  end
+
+  class StorageMethodNotFound < PaperclipError
+  end
+
+  class CommandNotFoundError < PaperclipError
   end
 
   class NotIdentifiedByImageMagickError < PaperclipError #:nodoc:
   end
-  
+
   class InfiniteInterpolationError < PaperclipError #:nodoc:
   end
-  
+
   module Resource
-
     def self.included(base)
-
-      base.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        class_variable_set(:@@attachment_definitions,nil) unless class_variable_defined?(:@@attachment_definitions)
-        def self.attachment_definitions
-          @@attachment_definitions
-        end
-
-        def self.attachment_definitions=(obj)
-          @@attachment_definitions = obj
-        end
-      RUBY
-
       base.extend Paperclip::ClassMethods
+      base.extend Paperclip::Ext::Class::Hook
 
       # Done at this time to ensure that the user
       # had a chance to configure the app in an initializer
@@ -232,50 +238,50 @@ module Paperclip
       end
 
       Paperclip.require_processors
-
     end
-
   end
 
   module ClassMethods
     # +has_attached_file+ gives the class it is called on an attribute that maps to a file. This
-    # is typically a file stored somewhere on the filesystem and has been uploaded by a user. 
+    # is typically a file stored somewhere on the filesystem and has been uploaded by a user.
     # The attribute returns a Paperclip::Attachment object which handles the management of
-    # that file. The intent is to make the attachment as much like a normal attribute. The 
-    # thumbnails will be created when the new file is assigned, but they will *not* be saved 
-    # until +save+ is called on the record. Likewise, if the attribute is set to +nil+ is 
-    # called on it, the attachment will *not* be deleted until +save+ is called. See the 
-    # Paperclip::Attachment documentation for more specifics. There are a number of options 
+    # that file. The intent is to make the attachment as much like a normal attribute. The
+    # thumbnails will be created when the new file is assigned, but they will *not* be saved
+    # until +save+ is called on the record. Likewise, if the attribute is set to +nil+ is
+    # called on it, the attachment will *not* be deleted until +save+ is called. See the
+    # Paperclip::Attachment documentation for more specifics. There are a number of options
     # you can set to change the behavior of a Paperclip attachment:
     # * +url+: The full URL of where the attachment is publically accessible. This can just
     #   as easily point to a directory served directly through Apache as it can to an action
     #   that can control permissions. You can specify the full domain and path, but usually
-    #   just an absolute path is sufficient. The leading slash must be included manually for 
-    #   absolute paths. The default value is "/:class/:attachment/:id/:style_:filename". See
+    #   just an absolute path is sufficient. The leading slash *must* be included manually for
+    #   absolute paths. The default value is
+    #   "/system/:attachment/:id/:style/:filename". See
     #   Paperclip::Attachment#interpolate for more information on variable interpolaton.
-    #     :url => "/:attachment/:id/:style_:basename:extension"
+    #     :url => "/:class/:attachment/:id/:style_:filename"
     #     :url => "http://some.other.host/stuff/:class/:id_:extension"
-    # * +default_url+: The URL that will be returned if there is no attachment assigned. 
-    #   This field is interpolated just as the url is. The default value is 
-    #   "/:class/:attachment/missing_:style.png"
+    # * +default_url+: The URL that will be returned if there is no attachment assigned.
+    #   This field is interpolated just as the url is. The default value is
+    #   "/:attachment/:style/missing.png"
     #     has_attached_file :avatar, :default_url => "/images/default_:style_avatar.png"
     #     User.new.avatar_url(:small) # => "/images/default_small_avatar.png"
-    # * +styles+: A hash of thumbnail styles and their geometries. You can find more about 
-    #   geometry strings at the ImageMagick website 
+    # * +styles+: A hash of thumbnail styles and their geometries. You can find more about
+    #   geometry strings at the ImageMagick website
     #   (http://www.imagemagick.org/script/command-line-options.php#resize). Paperclip
-    #   also adds the "#" option (e.g. "50x50#"), which will resize the image to fit maximally 
-    #   inside the dimensions and then crop the rest off (weighted at the center). The 
+    #   also adds the "#" option (e.g. "50x50#"), which will resize the image to fit maximally
+    #   inside the dimensions and then crop the rest off (weighted at the center). The
     #   default value is to generate no thumbnails.
-    # * +default_style+: The thumbnail style that will be used by default URLs. 
+    # * +default_style+: The thumbnail style that will be used by default URLs.
     #   Defaults to +original+.
     #     has_attached_file :avatar, :styles => { :normal => "100x100#" },
     #                       :default_style => :normal
     #     user.avatar.url # => "/avatars/23/normal_me.png"
-    # * +whiny_thumbnails+: Will raise an error if Paperclip cannot process thumbnails of an
-    #   uploaded image. This will ovrride the global setting for this attachment. 
-    #   Defaults to true. 
+    # * +whiny+: Will raise an error if Paperclip cannot post_process an uploaded file due
+    #   to a command line error. This will override the global setting for this attachment.
+    #   Defaults to true. This option used to be called :whiny_thumbanils, but this is
+    #   deprecated.
     # * +convert_options+: When creating thumbnails, use this free-form options
-    #   field to pass in various convert command options.  Typical options are "-strip" to
+    #   array to pass in various convert command options.  Typical options are "-strip" to
     #   remove all Exif data from the image (save space for thumbnails and avatars) or
     #   "-depth 8" to specify the bit depth of the resulting conversion.  See ImageMagick
     #   convert documentation for more options: (http://www.imagemagick.org/script/convert.php)
@@ -283,12 +289,18 @@ module Paperclip
     #   of thumbnail being generated. You can also specify :all as a key, which will apply
     #   to all of the thumbnails being generated. If you specify options for the :original,
     #   it would be best if you did not specify destructive options, as the intent of keeping
-    #   the original around is to regenerate all the thumbnails then requirements change.
+    #   the original around is to regenerate all the thumbnails when requirements change.
     #     has_attached_file :avatar, :styles => { :large => "300x300", :negative => "100x100" }
     #                                :convert_options => {
     #                                  :all => "-strip",
     #                                  :negative => "-negate"
     #                                }
+    #   NOTE: While not deprecated yet, it is not recommended to specify options this way.
+    #   It is recommended that :convert_options option be included in the hash passed to each
+    #   :styles for compatability with future versions.
+    #   NOTE: Strings supplied to :convert_options are split on space in order to undergo
+    #   shell quoting for safety. If your options require a space, please pre-split them
+    #   and pass an array to :convert_options instead.
     # * +storage+: Chooses the storage backend where the files will be stored. The current
     #   choices are :filesystem and :s3. The default is :filesystem. Make sure you read the
     #   documentation for Paperclip::Storage::Filesystem and Paperclip::Storage::S3
@@ -296,10 +308,11 @@ module Paperclip
     def has_attached_file name, options = {}
       include InstanceMethods
 
-      self.attachment_definitions = {} if self.attachment_definitions.nil?
-      self.attachment_definitions[name] = {:validations => []}.merge(options)
-      
+      Paperclip::Ext::Class.write_inheritable_attribute(self, :attachment_definitions, {}) if attachment_definitions.nil?
+      attachment_definitions[name] = {:validations => []}.merge(options)
+
       property_options = options.delete_if { |k,v| ![ :public, :protected, :private, :accessor, :reader, :writer ].include?(key) }
+      property_options[:required] = false
 
       property :"#{name}_file_name",    String,   property_options.merge(:length => 255)
       property :"#{name}_content_type", String,   property_options.merge(:length => 255)
@@ -308,10 +321,9 @@ module Paperclip
 
       after :save, :save_attached_files
       before :destroy, :destroy_attached_files
-      
-      # not needed with extlib just do before :post_process, or after :post_process
-      # define_callbacks :before_post_process, :after_post_process
-      # define_callbacks :"before_#{name}_post_process", :"after_#{name}_post_process"
+
+      Paperclip::Callbacks.define(self, "post_process")
+      Paperclip::Callbacks.define(self, "#{name}_post_process")
 
       define_method name do |*args|
         a = attachment_for(name)
@@ -323,7 +335,7 @@ module Paperclip
       end
 
       define_method "#{name}?" do
-        ! attachment_for(name).original_filename.blank?
+        attachment_for(name).file?
       end
 
       if Paperclip.config.use_dm_validations
@@ -335,14 +347,14 @@ module Paperclip
     # Returns the attachment definitions defined by each call to
     # has_attached_file.
     def attachment_definitions
-      read_inheritable_attribute(:attachment_definitions)
+      Paperclip::Ext::Class.read_inheritable_attribute(self, :attachment_definitions)
     end
   end
 
   module InstanceMethods #:nodoc:
     def attachment_for name
-      @attachments ||= {}
-      @attachments[name] ||= Attachment.new(name, self, self.class.attachment_definitions[name])
+      @_paperclip_attachments ||= {}
+      @_paperclip_attachments[name] ||= Attachment.new(name, self, self.class.attachment_definitions[name])
     end
 
     def each_attachment

@@ -34,41 +34,48 @@ module Paperclip
     end
 
     # Returns the filename, the same way as ":basename.:extension" would.
-    def filename attachment, style
-      "#{basename(attachment, style)}.#{extension(attachment, style)}"
+    def filename attachment, style_name
+      "#{basename(attachment, style_name)}.#{extension(attachment, style_name)}"
     end
 
     # Returns the interpolated URL. Will raise an error if the url itself
     # contains ":url" to prevent infinite recursion. This interpolation
     # is used in the default :path to ease default specifications.
-    def url attachment, style
-      raise InfiniteInterpolationError if attachment.options[:url].include?(":url")
-      attachment.url(style, false)
+    RIGHT_HERE = "#{__FILE__.gsub(%r{^\./}, "")}:#{__LINE__ + 3}"
+    def url attachment, style_name
+      raise InfiniteInterpolationError if caller.any?{|b| b.index(RIGHT_HERE) }
+      attachment.url(style_name, false)
     end
 
     # Returns the timestamp as defined by the <attachment>_updated_at field
-    def timestamp attachment, style
+    def timestamp attachment, style_name
       attachment.instance_read(:updated_at).to_s
+    end
+
+    # Returns an integer timestamp that is time zone-neutral, so that paths
+    # remain valid even if a server's time zone changes.
+    def updated_at attachment, style_name
+      attachment.updated_at
     end
 
     def web_root attachment, style
       if Object.const_defined?('Merb')
         merb_root(attachment, style)
-      elsif Object.const_defined("RAILS_ROOT")
+      elsif Object.const_defined("Rails")
         rails_root(attachment, style)
       else
         ""
       end
     end
 
-    # Returns the RAILS_ROOT constant.
-    def rails_root attachment, style
-      Object.const_defined?('RAILS_ROOT') ? RAILS_ROOT : nil
+    # Returns the Rails.root constant.
+    def rails_root attachment, style_name
+      Object.const_defined?('Rails') ? Rails.root : nil
     end
 
-    # Returns the RAILS_ENV constant.
-    def rails_env attachment, style
-      Object.const_defined?('RAILS_ENV') ? RAILS_ENV : nil
+    # Returns the Rails.env constant.
+    def rails_env attachment, style_name
+      Object.const_defined?('Rails') ? Rails.env : nil
     end
 
     def merb_root attachment, style
@@ -79,45 +86,60 @@ module Paperclip
       Object.const_defined?('Merb') ? Merb.env : nil
     end
 
-    # Returns the snake cased, pluralized version of the class name.
+    # Returns the underscored, pluralized version of the class name.
     # e.g. "users" for the User class.
-    def class attachment, style
-      attachment.instance.class.to_s.snake_case.pluralize
+    # NOTE: The arguments need to be optional, because some tools fetch
+    # all class names. Calling #class will return the expected class.
+    def class attachment = nil, style_name = nil
+      return super() if attachment.nil? && style_name.nil?
+      name = DataMapper::Inflector.underscore(attachment.instance.class.to_s)
+      DataMapper::Inflector.pluralize(name)
     end
 
     # Returns the basename of the file. e.g. "file" for "file.jpg"
-    def basename attachment, style
+    def basename attachment, style_name
       attachment.original_filename.gsub(/#{File.extname(attachment.original_filename)}$/, "")
     end
 
     # Returns the extension of the file. e.g. "jpg" for "file.jpg"
     # If the style has a format defined, it will return the format instead
     # of the actual extension.
-    def extension attachment, style
-      ((style = attachment.styles[style]) && style[:format]) ||
+    def extension attachment, style_name
+      ((style = attachment.styles[style_name]) && style[:format]) ||
         File.extname(attachment.original_filename).gsub(/^\.+/, "")
     end
 
     # Returns the id of the instance.
-    def id attachment, style
+    def id attachment, style_name
       attachment.instance.id
+    end
+
+    # Returns the fingerprint of the instance.
+    def fingerprint attachment, style_name
+      attachment.fingerprint
+    end
+
+    # Returns a the attachment hash.  See Paperclip::Attachment#hash for
+    # more details.
+    def hash attachment, style_name
+      attachment.hash(style_name)
     end
 
     # Returns the id of the instance in a split path form. e.g. returns
     # 000/001/234 for an id of 1234.
-    def id_partition attachment, style
+    def id_partition attachment, style_name
       ("%09d" % attachment.instance.id).scan(/\d{3}/).join("/")
     end
 
     # Returns the pluralized form of the attachment name. e.g.
     # "avatars" for an attachment of :avatar
-    def attachment attachment, style
-      attachment.name.to_s.downcase.pluralize
+    def attachment attachment, style_name
+      DataMapper::Inflector.pluralize(attachment.name.to_s.downcase)
     end
 
     # Returns the style, or the default style if nil is supplied.
-    def style attachment, style
-      style || attachment.default_style
+    def style attachment, style_name
+      style_name || attachment.default_style
     end
   end
 end

@@ -9,12 +9,12 @@ require 'dm-validations'
 require 'dm-paperclip'
 
 desc 'Default: run unit tests.'
-task :default => [:clean, :test]
+task :default => [:clean, :all]
 
 # Test tasks
 desc 'Test the DM-Paperclip library.'
 Rake::TestTask.new(:test) do |t|
-  t.libs << 'dm-paperclip'
+  t.libs << '.'
   t.pattern = 'test/**/*_test.rb'
   t.verbose = true
 end
@@ -31,14 +31,14 @@ Rake::RDocTask.new(:doc) do |rdoc|
   rdoc.rdoc_dir = 'doc'
   rdoc.title    = 'DM-Paperclip'
   rdoc.options << '--line-numbers' << '--inline-source'
-  rdoc.rdoc_files.include('README.rdoc')
+  rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
  
 # Code coverage
 task :coverage do
   system("rm -fr coverage")
-  system("rcov test/test_*.rb")
+  system("rcov test/*_test.rb")
   system("open coverage/index.html")
 end
 
@@ -72,7 +72,8 @@ spec = Gem::Specification.new do |s|
   s.extra_rdoc_files  = ["README.rdoc"]
   s.rdoc_options << '--line-numbers' << '--inline-source'
   s.requirements << "ImageMagick"
-  s.requirements << "data_mapper"
+  s.requirements << "dm-core"
+  s.requirements << "dm-validations"
 end
  
 Rake::GemPackageTask.new(spec) do |pkg| 

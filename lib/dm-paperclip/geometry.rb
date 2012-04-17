@@ -6,10 +6,8 @@ module Paperclip
 
     # Gives a Geometry representing the given height and width
     def initialize width = nil, height = nil, modifier = nil
-      height = nil if height == ''
-      width  = nil if width  == ''
-      @height = (height || width).to_f
-      @width  = (width  || height).to_f
+      @height = height.to_f
+      @width  = width.to_f
       @modifier = modifier
     end
 
@@ -18,7 +16,7 @@ module Paperclip
     def self.from_file file
       file = file.path if file.respond_to? "path"
       geometry = begin
-                   Paperclip.run("identify", %Q[-format "%wx%h" "#{file}"[0]])
+                   Paperclip.run("identify", "-format %wx%h :file", :file => "#{file}[0]")
                  rescue PaperclipCommandLineError
                    ""
                  end
