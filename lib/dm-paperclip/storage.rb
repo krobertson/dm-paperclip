@@ -57,6 +57,7 @@ module Paperclip
             while(true)
               path = File.dirname(path)
               FileUtils.rmdir(path)
+              break if File.exists?(path)
             end
           rescue Errno::EEXIST, Errno::ENOTEMPTY, Errno::ENOENT, Errno::EINVAL, Errno::ENOTDIR
             # Stop trying to remove parent directories
