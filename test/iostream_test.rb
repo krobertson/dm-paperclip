@@ -1,13 +1,7 @@
-require 'test/helper'
+require File.expand_path(File.join(File.dirname(__FILE__), 'helper'))
 
 class IOStreamTest < Test::Unit::TestCase
-  context "IOStream" do
-    should "be included in IO, File, Tempfile, and StringIO" do
-      [IO, File, Tempfile, StringIO].each do |klass|
-        assert klass.included_modules.include?(IOStream), "Not in #{klass}"
-      end
-    end
-  end
+  include IOStream
 
   context "A file" do
     setup do
@@ -21,7 +15,7 @@ class IOStreamTest < Test::Unit::TestCase
       context "and given a String" do
         setup do
           FileUtils.mkdir_p(File.join(ROOT, 'tmp'))
-          assert @result = @file.stream_to(File.join(ROOT, 'tmp', 'iostream.string.test'))
+          assert @result = stream_to(@file, File.join(ROOT, 'tmp', 'iostream.string.test'))
         end
 
         should "return a File" do
@@ -38,7 +32,7 @@ class IOStreamTest < Test::Unit::TestCase
         setup do
           tempfile = Tempfile.new('iostream.test')
           tempfile.binmode
-          assert @result = @file.stream_to(tempfile)
+          assert @result = stream_to(@file, tempfile)
         end
 
         should "return a Tempfile" do
@@ -53,9 +47,9 @@ class IOStreamTest < Test::Unit::TestCase
 
     end
 
-    context "that is sent #to_tempfile" do
+    context "that is converted #to_tempfile" do
       setup do
-        assert @tempfile = @file.to_tempfile
+        assert @tempfile = to_tempfile(@file)
       end
 
       should "convert it to a Paperclip Tempfile" do
