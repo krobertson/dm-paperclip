@@ -2,7 +2,7 @@ require 'rubygems'
 require 'test/unit'
 require 'shoulda'
 
-require File.join(File.dirname(__FILE__), '..', 'lib', 'dm-paperclip', 'geometry.rb')
+require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'dm-paperclip', 'geometry.rb'))
 
 class GeometryTest < Test::Unit::TestCase
   context "Paperclip::Geometry" do
