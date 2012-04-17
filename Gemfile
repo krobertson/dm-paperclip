@@ -3,6 +3,7 @@ gemspec
 
 group :development, :test do
   gem 'dm-migrations'
+  gem 'dm-validations'
   gem 'dm-sqlite-adapter'
 
   gem 'rake', '~> 0.8.7'
