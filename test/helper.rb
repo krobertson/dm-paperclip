@@ -1,4 +1,10 @@
 require 'rubygems'
+
+require 'simplecov'
+SimpleCov.start do
+  add_filter "/test/"
+end
+
 require 'tempfile'
 require 'fileutils'
 require 'test/unit'

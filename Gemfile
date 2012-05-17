@@ -10,6 +10,7 @@ group :development, :test do
   gem 'shoulda'
   gem 'mocha'
   gem 'aws-s3'
+  gem 'simplecov', :require => false
 
   if RUBY_VERSION < '1.9'
     gem 'test-unit'
