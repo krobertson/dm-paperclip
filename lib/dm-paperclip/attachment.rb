@@ -114,8 +114,6 @@ module Paperclip
         instance_write(:content_type,    uploaded_file.content_type.to_s.strip)
         instance_write(:file_size,       uploaded_file.size.to_i)
       end
-      instance_write(:fingerprint,     generate_fingerprint(uploaded_file))
-      instance_write(:updated_at,      DateTime.now)
 
       @dirty = true
 
@@ -124,6 +122,7 @@ module Paperclip
       # Reset the file size if the original file was reprocessed.
       instance_write(:file_size,   @queued_for_write[:original].size.to_i)
       instance_write(:fingerprint, generate_fingerprint(@queued_for_write[:original]))
+      instance_write(:updated_at,      DateTime.now)
     ensure
       uploaded_file.close if close_uploaded_file
       validate

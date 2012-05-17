@@ -498,6 +498,23 @@ class AttachmentTest < Test::Unit::TestCase
     end
   end
 
+  context 'Assign an attachment with a hash' do
+    setup do
+      rebuild_model :styles => { :something => "100x100#" }
+      @file  = StringIO.new(".")
+    end
+
+    should 'set basic properties' do
+      @dummy = Dummy.new
+      hash = { 'tempfile' => @file, 'filename' => '5k.png', 'content_type' => 'image/png' }
+      Paperclip::Thumbnail.expects(:make).returns(@file)
+      @dummy.avatar = hash
+
+      assert_equal "5k.png", @dummy.avatar.original_filename
+      assert_equal "image/png", @dummy.avatar.instance.avatar_content_type
+    end
+  end
+
   context "Assigning an attachment" do
     setup do
       rebuild_model :styles => { :something => "100x100#" }
