@@ -43,7 +43,7 @@ require 'dm-paperclip/attachment'
 # documentation for Paperclip::ClassMethods for more useful information.
 module Paperclip
 
-  VERSION = "2.4.0"
+  VERSION = "2.4.1"
 
   # To configure Paperclip, put this code in an initializer, Rake task, or wherever:
   #
@@ -170,7 +170,7 @@ module Paperclip
     end
 
     def processor name #:nodoc:
-      name = name.to_s.camel_case
+      name = name.to_s.camelize
       processor = Paperclip.const_get(name)
       unless processor.ancestors.include?(Paperclip::Processor)
         raise PaperclipError.new("[paperclip] Processor #{name} was not found")
@@ -326,7 +326,7 @@ module Paperclip
       end
 
       if Paperclip.config.use_dm_validations
-        validators.add(Paperclip::Validate::CopyAttachmentErrors, [name])
+        validators.add(Paperclip::Validate::CopyAttachmentErrors, name)
       end
 
     end

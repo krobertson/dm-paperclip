@@ -34,11 +34,6 @@ module Paperclip
     end
 
     class SizeValidator < DataMapper::Validate::GenericValidator #:nodoc:
-      def initialize(field_name, options={})
-        super
-        @field_name, @options = field_name, options
-      end
-
       def call(target)
         field_value = target.validation_property_value(:"#{@field_name}_file_size")
         return true if field_value.nil?
@@ -57,11 +52,6 @@ module Paperclip
     end
 
     class RequiredFieldValidator < DataMapper::Validate::GenericValidator #:nodoc:
-      def initialize(field_name, options={})
-        super
-        @field_name, @options = field_name, options
-      end
-
       def call(target)
         field_value = target.validation_property_value(@field_name)
         if field_value.nil? || field_value.original_filename.blank?
@@ -74,11 +64,6 @@ module Paperclip
     end
 
     class ContentTypeValidator < DataMapper::Validate::GenericValidator #:nodoc:
-      def initialize(field_name, options={})
-        super
-        @field_name, @options = field_name, options
-      end
-
       def call(target)
         valid_types = [@options[:content_type]].flatten
         field_value = target.validation_property_value(@field_name)
@@ -100,11 +85,6 @@ module Paperclip
     end
 
     class CopyAttachmentErrors < DataMapper::Validate::GenericValidator #:nodoc:
-      def initialize(field_name, options={})
-        super
-        @field_name, @options = field_name, options
-      end
-
       def call(target)
         field_value = target.validation_property_value(@field_name)
         unless field_value.nil? || field_value.original_filename.blank?
