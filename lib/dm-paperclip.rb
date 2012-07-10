@@ -326,7 +326,7 @@ module Paperclip
       end
 
       if Paperclip.config.use_dm_validations
-        add_validator_to_context(opts_from_validator_args([name]), [name], Paperclip::Validate::CopyAttachmentErrors)
+        validators.add(Paperclip::Validate::CopyAttachmentErrors, [name])
       end
 
     end
