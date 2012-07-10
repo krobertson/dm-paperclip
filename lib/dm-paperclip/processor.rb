@@ -43,7 +43,11 @@ module Paperclip
     # Replaces Tempfile's +make_tmpname+ with one that honors file extensions.
     def make_tmpname(basename, n)
       extension = File.extname(basename)
-      sprintf("%s,%d,%d%s", File.basename(basename, extension), $$, n, extension)
+      if n
+        sprintf("%s,%d,%d%s", File.basename(basename, extension), $$, n, extension)
+      else
+        sprintf("%s,%d,%s", File.basename(basename, extension), $$, extension)
+      end
     end
   end
 end
