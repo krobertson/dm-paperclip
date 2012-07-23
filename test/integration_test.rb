@@ -1,4 +1,4 @@
-require 'test/helper.rb'
+require File.expand_path("./helper", File.dirname(__FILE__))
 
 class IntegrationTest < Test::Unit::TestCase
   context "Many models at once" do

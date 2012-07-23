@@ -44,9 +44,9 @@ module Paperclip
     def make_tmpname(basename, n)
       extension = File.extname(basename)
       if n
-        "#{rand(0x100000000).to_s(36)}-#{$$}-#{n}#{extension}"
+        "#{File.basename(basename, extension)}_#{rand(0x100000000).to_s(36)}-#{$$}-#{n}#{extension}"
       else
-        "#{rand(0x100000000).to_s(36)}-#{$$}#{extension}"
+        "#{File.basename(basename, extension)}_#{rand(0x100000000).to_s(36)}-#{$$}#{extension}"
       end
     end
   end

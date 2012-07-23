@@ -4,8 +4,9 @@ require 'shoulda'
 require 'mocha'
 require 'tempfile'
 
-require File.join(File.dirname(__FILE__), '..', 'lib', 'dm-paperclip', 'geometry.rb')
-require File.join(File.dirname(__FILE__), '..', 'lib', 'dm-paperclip', 'thumbnail.rb')
+require 'dm-paperclip/geometry'
+require 'dm-paperclip/processor'
+require 'dm-paperclip/thumbnail'
 
 class ThumbnailTest < Test::Unit::TestCase
 

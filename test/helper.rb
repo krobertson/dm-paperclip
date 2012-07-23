@@ -1,17 +1,15 @@
-require 'rubygems'
+require 'bundler'
 require 'test/unit'
 require 'shoulda'
 require 'mocha'
 require 'tempfile'
 
-require 'dm-core'
-require 'dm-validations'
-require 'dm-migrations'
-begin
-  require 'ruby-debug'
-rescue LoadError
-  puts "ruby-debug not loaded"
-end
+RUBY_VERSION >= '1.9.0' ? require("debugger") : require('ruby-debug')
+
+Bundler.setup(:default, :development)
+
+require "dm-migrations"
+require "dm-validations"
 
 ROOT       = File.join(File.dirname(__FILE__), '..')
 RAILS_ROOT = ROOT
@@ -28,10 +26,8 @@ Merb.class_eval do
   end
 end
 
-$LOAD_PATH << File.join(ROOT, 'lib')
-$LOAD_PATH << File.join(ROOT, 'lib', 'dm-paperclip')
-
-require File.join(ROOT, 'lib', 'dm-paperclip.rb')
+$:.push File.expand_path("../lib", File.dirname(__FILE__))
+require 'dm-paperclip'
 
 ENV['RAILS_ENV'] ||= 'test'
 
@@ -54,13 +50,14 @@ def rebuild_model options = {}
   Object.const_set("Dummy", Class.new())
   Dummy.class_eval do
     include DataMapper::Resource
-    include DataMapper::Validate
+    #include DataMapper::Validate
+    # => include DataMapper::Validations
     include Paperclip::Resource
-    property :id, ::DataMapper::Types::Serial
+    property :id, ::DataMapper::Property::Serial
     property :other, String
     has_attached_file :avatar, options
   end
-  Dummy.auto_migrate!
+  DataMapper.auto_migrate!
 end
 
 def temporary_env(new_env)

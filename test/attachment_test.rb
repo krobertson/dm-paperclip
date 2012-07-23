@@ -1,4 +1,4 @@
-require 'test/helper'
+require File.expand_path("./helper", File.dirname(__FILE__))
 
 class Dummy
   # This is a dummy class
@@ -32,7 +32,7 @@ class AttachmentTest < Test::Unit::TestCase
       setup do
         @dummy = Dummy.new
       end
-      
+
       should "return false when asked exists?" do
         assert !@dummy.avatar.exists?
       end
@@ -46,7 +46,7 @@ class AttachmentTest < Test::Unit::TestCase
 
       Paperclip::Attachment.default_options.keys.each do |key|
         should "be the default_options for #{key}" do
-          assert_equal @old_default_options[key], 
+          assert_equal @old_default_options[key],
                        @attachment.instance_variable_get("@#{key}"),
                        key
         end

@@ -29,6 +29,7 @@ require 'erb'
 require 'tempfile'
 
 require 'dm-core'
+require 'extlib'
 
 require 'dm-paperclip/upfile'
 require 'dm-paperclip/iostream'
@@ -170,7 +171,7 @@ module Paperclip
     end
 
     def processor name #:nodoc:
-      name = name.to_s.camelize
+      name = name.to_s.camel_case
       processor = Paperclip.const_get(name)
       unless processor.ancestors.include?(Paperclip::Processor)
         raise PaperclipError.new("[paperclip] Processor #{name} was not found")
