@@ -82,8 +82,7 @@ module Paperclip
       # Libraries and mixins that provide S3 support
       LIBRARIES = {
         'aws' => AwsLibrary,
-        'right_aws' => AwsLibrary,
-        'aws/s3' => AwsS3Library
+        'right_aws' => AwsLibrary
       }
 
       def self.extended(base)
