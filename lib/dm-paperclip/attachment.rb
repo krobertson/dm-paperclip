@@ -290,7 +290,7 @@ module Paperclip
 
     # Returns true if a file has been assigned.
     def file?
-      !Paperclip::Ext.blank?(original_filename)
+      !Paperclip::Ext.blank?(original_filename) && exists?(path)
     end
 
     # Writes the attachment-specific attribute on the instance. For example,
