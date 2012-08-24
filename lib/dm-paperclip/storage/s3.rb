@@ -55,6 +55,8 @@ module Paperclip
     #   alias to the S3 domain of your bucket. Used with the +:s3_alias_url+
     #   url interpolation. See the link in the +url+ entry for more
     #   information about S3 domains and buckets.
+    # * +s3_reduced_redundancy+: When true, objects will be stored with Reduced Redundancy Storage
+    # * +endpoint+: S3 host endpoint defined here: http://docs.amazonwebservices.com/general/latest/gr/rande.html
     # * +url+: There are three options for the S3 url. You can choose to
     #   have the bucket's name placed domain-style
     #   (bucket.s3.amazonaws.com) or path-style (s3.amazonaws.com/bucket).
@@ -110,6 +112,8 @@ module Paperclip
           @s3_protocol    = @options[:s3_protocol]    || (@s3_permissions == :public_read ? 'http' : 'https')
           @s3_headers     = @options[:s3_headers]     || {}
           @s3_host_alias  = @options[:s3_host_alias]
+          @s3_endpoint    = @options[:s3_endpoint]    || "s3.amazonaws.com"
+          @s3_reduced_redundancy = @options[:reduced_redundancy]  || false
           unless @url.to_s.match(/^:s3.*url$/)
             @path          = @path.gsub(/:url/, @url)
             @url           = ":s3_path_url"
@@ -138,6 +142,14 @@ module Paperclip
 
       def s3_host_alias
         @s3_host_alias
+      end
+
+      def s3_reduced_redundancy
+        @s3_reduced_redundancy
+      end
+
+      def s3_endpoint
+        @s3_endpoint
       end
 
       def parse_credentials(creds)

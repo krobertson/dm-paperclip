@@ -9,7 +9,8 @@ module Paperclip
           @s3 = AWS::S3.new(
             :access_key_id => @s3_credentials[:access_key_id],
             :secret_access_key => @s3_credentials[:secret_access_key],
-            :s3_endpoint => @s3_credentials[:s3_endpoint]
+            :s3_endpoint => @s3_endpoint,
+            :reduced_redundancy => @s3_reduced_redundancy
           )
           @s3_bucket = @s3.buckets[bucket_name]
         end
