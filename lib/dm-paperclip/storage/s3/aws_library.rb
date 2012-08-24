@@ -11,7 +11,7 @@ module Paperclip
             :secret_access_key => @s3_credentials[:secret_access_key],
             :s3_endpoint => @s3_credentials[:s3_endpoint]
           )
-          @s3_bucket = @s3.bucket(bucket_name)
+          @s3_bucket = @s3.buckets(bucket_name)
         end
 
         def s3_expiring_url(key,time)
