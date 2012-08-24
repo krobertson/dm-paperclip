@@ -1,4 +1,3 @@
-require 'dm-paperclip/storage/s3/aws_s3_library'
 require 'dm-paperclip/storage/s3/aws_library'
 
 module Paperclip

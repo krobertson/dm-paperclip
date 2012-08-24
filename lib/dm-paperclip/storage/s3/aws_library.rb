@@ -15,7 +15,7 @@ module Paperclip
         end
 
         def s3_expiring_url(key,time)
-          @s3.interface.get_link(bucket_name,key,time)
+          @s3_bucket.objects[key].url_for(:read, :expires => time)
         end
 
         def s3_exists?(key)
@@ -23,17 +23,14 @@ module Paperclip
         end
 
         def s3_download(key,file)
-          puts "download #{key}"
           @s3_bucket.objects[key].read { |chunk| file.write(chunk) }
         end
 
         def s3_store(key,file)
-          puts "store #{key}"
           @s3_bucket.objects[key].write(file)
         end
 
         def s3_delete(key)
-          puts "delete #{key}"
           @s3_bucket.objects[key].delete
         end
       end
