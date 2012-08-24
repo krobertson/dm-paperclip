@@ -23,14 +23,17 @@ module Paperclip
         end
 
         def s3_download(key,file)
+          puts "download #{key}"
           @s3_bucket.objects[key].read { |chunk| file.write(chunk) }
         end
 
         def s3_store(key,file)
+          puts "store #{key}"
           @s3_bucket.objects[key].write(file)
         end
 
         def s3_delete(key)
+          puts "delete #{key}"
           @s3_bucket.objects[key].delete
         end
       end
