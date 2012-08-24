@@ -9,6 +9,7 @@ module Paperclip
           @s3 = Aws::S3.new(
             @s3_credentials[:access_key_id],
             @s3_credentials[:secret_access_key]
+            @s3_credentials[:server]
           )
           @s3_bucket = @s3.bucket(bucket_name)
         end
