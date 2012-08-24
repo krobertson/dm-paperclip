@@ -173,14 +173,16 @@ module Paperclip
       # style, in the format most representative of the current storage.
       def to_file style = default_style
         return @queued_for_write[style] if @queued_for_write[style]
-        filename = path(style)
-        extname  = File.extname(filename)
-        basename = File.basename(filename, extname)
-        file = Tempfile.new([basename, extname])
-        file.binmode
-        s3_download(filename,file)
-        file.rewind
-        return file
+        if (self.exists?)
+          filename = path(style)
+          extname  = File.extname(filename)
+          basename = File.basename(filename, extname)
+          file = Tempfile.new([basename, extname])
+          file.binmode
+          s3_download(filename,file)
+          file.rewind
+          return file
+        end
       end
 
       def flush_writes #:nodoc:
