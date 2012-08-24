@@ -11,7 +11,7 @@ module Paperclip
             :secret_access_key => @s3_credentials[:secret_access_key],
             :s3_endpoint => @s3_credentials[:s3_endpoint]
           )
-          @s3_bucket = @s3.buckets(bucket_name)
+          @s3_bucket = @s3.buckets[bucket_name]
         end
 
         def s3_expiring_url(key,time)
@@ -19,22 +19,19 @@ module Paperclip
         end
 
         def s3_exists?(key)
-          @s3_bucket.keys(:prefix => key).any? { |s3_key| s3_key.name == key }
+          @s3_bucket.objects.with_prefix(key).any? { |s3_key| s3_key.key == key }
         end
 
         def s3_download(key,file)
-          @s3_bucket.key(key).get { |chunk| file.write(chunk) }
+          @s3_bucket.objects[key].read { |chunk| file.write(chunk) }
         end
 
         def s3_store(key,file)
-          @s3_bucket.key(key).put(
-            file,
-            @s3_permissions.to_s.gsub('_','-')
-          )
+          @s3_bucket.objects[key].write(file)
         end
 
         def s3_delete(key)
-          @s3_bucket.key(key).delete
+          @s3_bucket.objects[key].delete
         end
       end
     end
