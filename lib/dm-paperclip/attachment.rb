@@ -288,7 +288,7 @@ module Paperclip
       false
     end
 
-    # Returns true if a file has been assigned.
+    # Returns true if a file has been assigned and file exists
     def file?
       !Paperclip::Ext.blank?(original_filename) && exists?(path)
     end
