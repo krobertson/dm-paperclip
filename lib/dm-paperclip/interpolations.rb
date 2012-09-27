@@ -26,11 +26,26 @@ module Paperclip
     # Perform the actual interpolation. Takes the pattern to interpolate
     # and the arguments to pass, which are the attachment and style name.
     def self.interpolate pattern, *args
-      all.reverse.inject( pattern.dup ) do |result, tag|
+      # iterate DataMapper::Property list
+      # properties is private si it is called like this
+      # args[0] is attachment instance
+      all_properties = all
+      attachment = args[0]
+      attachment.instance.send("properties").each do |property|
+        all_properties << property.name
+      end
+
+      all_properties.reverse.inject( pattern.dup ) do |result, tag|
         result.gsub(/:#{tag}/) do |match|
           send( tag, *args )
         end
       end
+    end
+
+    # Handle properties from DataMapper::Resource
+    def method_missing(id, *args)
+        attachment = args[0]
+        attachment.instance.attribute_get(id)
     end
 
     # Returns the filename, the same way as ":basename.:extension" would.
