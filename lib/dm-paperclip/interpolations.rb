@@ -139,5 +139,10 @@ module Paperclip
     def style attachment, style_name
       style_name || attachment.default_style
     end
+
+    # Returns the uuid of the instance.
+    def uuid attachment, style_name
+      attachment.instance.uuid
+    end
   end
 end
