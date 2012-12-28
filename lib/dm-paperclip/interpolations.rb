@@ -27,6 +27,7 @@ module Paperclip
     # and the arguments to pass, which are the attachment and style name.
     def self.interpolate pattern, *args
       all.reverse.inject( pattern.dup ) do |result, tag|
+
         result.gsub(/:#{tag}/) do |match|
           send( tag, *args )
         end

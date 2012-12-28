@@ -545,9 +545,11 @@ class AttachmentTest < Test::Unit::TestCase
       @tempfile = mock("tempfile")
       @not_file.stubs(:nil?).returns(false)
       @not_file.expects(:size).returns(10)
+      
       @tempfile.expects(:size).returns(10)
       @not_file.expects(:original_filename).returns("sheep_say_bæ.png\r\n")
       @not_file.expects(:content_type).returns("image/png\r\n")
+      @tempfile.expects(:read).returns("")
 
       @dummy = Dummy.new
       @attachment = @dummy.avatar
@@ -556,8 +558,6 @@ class AttachmentTest < Test::Unit::TestCase
       @attachment.expects(:post_process)
       @attachment.expects(:validate).twice
       @attachment.expects(:to_tempfile).returns(@tempfile)
-      @attachment.expects(:generate_fingerprint).with(@tempfile).returns("12345")
-      @attachment.expects(:generate_fingerprint).with(@not_file).returns("12345")
       @dummy.avatar = @not_file
     end
 
