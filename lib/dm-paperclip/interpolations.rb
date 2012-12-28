@@ -60,14 +60,11 @@ module Paperclip
     end
 
     def web_root attachment, style
-      if Object.const_defined?('Merb')
-        merb_root(attachment, style)
-      elsif Object.const_defined("Rails")
-        rails_root(attachment, style)
-      else
-        ""
-      end
-    end
+     Paperclip.config.root ||
+     merb_root(attachment, style) ||
+     rails_root(attachment, style) ||
+     ""
+     end
 
     # Returns the Rails.root constant.
     def rails_root attachment, style_name
