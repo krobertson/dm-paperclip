@@ -31,6 +31,13 @@ module Paperclip
         validators.add(Paperclip::Validate::ContentTypeValidator, *fields)
       end
 
+      # Places ActiveRecord-style validations on the geometry of the file assigned. The
+      # required options are:
+      # * +height+: a Range of pixels (i.e. 100..300+),
+      # * +width+: a Range of pixels (i.e. 100..300+)
+      def validates_attachment_geometry(*fields)
+        validators.add(Paperclip::Validate::GeometryValidator, *fields)
+      end
     end
 
     class SizeValidator < DataMapper::Validate::GenericValidator #:nodoc:
@@ -95,6 +102,23 @@ module Paperclip
           return false
         end
         return true
+      end
+    end
+
+    class GeometryValidator < DataMapper::Validate::GenericValidator #:nodoc:
+      def call(target)
+        field_value = target.validation_property_value(@field_name)
+        return true if field_value.queued_for_write[:original].nil?
+
+        geometry = Paperclip::Geometry.from_file(field_value.queued_for_write[:original].path)
+        
+        return true if @options[:width].include?(geometry.width) && @options[:height].include?(geometry.height)
+
+        error_message ||= sprintf("%s width must be between %s and %s px", DataMapper::Inflector.humanize(@field_name), @options[:width].begin, @options[:width].end) unless @options[:width].include?(geometry.width)
+        error_message ||= sprintf("%s height must be between %s and %s px", DataMapper::Inflector.humanize(@field_name), @options[:height].begin, @options[:height].end) unless@options[:height].include?(geometry.height)
+
+        add_error(target, error_message , @field_name)
+        return false
       end
     end
 
