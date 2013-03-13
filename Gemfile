@@ -9,7 +9,7 @@ group :development, :test do
   gem 'rake', '~> 0.8.7'
   gem 'shoulda'
   gem 'mocha'
-  gem 'aws-s3'
+  gem 'aws-sdk'
   gem 'simplecov', :require => false
 
   if RUBY_VERSION < '1.9'
