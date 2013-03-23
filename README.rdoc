@@ -46,11 +46,12 @@ In your model:
                       :styles => { :medium => "300x300>",
                                    :thumb => "100x100>" }
     has_attached_file :myfile, 
-                      :storage => :s3,
-                      :path => "path/on/s3",
+                      :path     => "path/on/s3",
+                      :storage  => :s3,
+                      :bucket   => "bucket_name",
+                      :s3_endpoint    => "s3.amazonaws.com", # this is default and optional
                       :s3_credentials => {  :access_key_id => "S3_ACCESS_KEY",
-                                            :secret_access_key => "S3_SECRET_KEY, 
-                                            :bucket => "default_bucket_name" }
+                                            :secret_access_key => "S3_SECRET_KEY" }
   end
 
 You will need to add an initializer to configure Paperclip.  If on Rails, can add a config/initializers/paperclip.rb, on Merb
