@@ -23,9 +23,14 @@ The code DM-Paperclip is available at Github:
 It is regularly updated to keep in sync with the latest from Thoughtbot.
 
 Releases are tagged within the repository and versioned the same as the original model.  You can also get the latest release
-packaged as a gem through Rubyforge:
+packaged as a gem through GitHub (Gemfile):
 
-  sudo gem install dm-paperclip
+  gem 'dm-paperclip-s3', :git => 'https://github.com/krzak/dm-paperclip.git'
+
+This gem depends on official AWS SDK:
+
+  require 'aws-sdk'
+  require 'dm-paperclip-s3'
 
 ==Usage
 
