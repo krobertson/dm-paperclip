@@ -18,7 +18,7 @@ See the documentation for the +has_attached_file+ method for options.
 
 The code DM-Paperclip is available at Github:
 
-  git clone git://github.com/krobertson/dm-paperclip.git
+  git clone git://github.com/krzak/dm-paperclip.git
 
 It is regularly updated to keep in sync with the latest from Thoughtbot.
 
