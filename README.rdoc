@@ -1,6 +1,6 @@
 =DataMapper Paperclip
 
-DM-Paperclip is a port of Thoughtbot's Paperclip plugin to work with DataMapper.  This plugin is fully compatible with
+DM-Paperclip-S3 is a port of Thoughtbot's Paperclip plugin to work with DataMapper.  This plugin is fully compatible with
 the original ActiveRecord-oriented Paperclip.  You could take an existing ActiveRecord database and use it with DataMapper.
 The module also includes updates validation handling and automatic including of the necessary 'property' fields into
 your model.
@@ -16,16 +16,16 @@ See the documentation for the +has_attached_file+ method for options.
 
 ==Code
 
-The code DM-Paperclip is available at Github:
+The code DM-Paperclip-S3 is available at Github:
 
-  git clone git://github.com/krzak/dm-paperclip.git
+  git clone git://github.com/krzak/dm-paperclip-s3.git
 
 It is regularly updated to keep in sync with the latest from Thoughtbot.
 
 Releases are tagged within the repository and versioned the same as the original model.  You can also get the latest release
 packaged as a gem through GitHub (Gemfile):
 
-  gem 'dm-paperclip-s3', :git => 'https://github.com/krzak/dm-paperclip.git'
+  gem 'dm-paperclip-s3', :git => 'https://github.com/krzak/dm-paperclip-s3.git'
 
 This gem depends on official AWS SDK:
 
@@ -112,7 +112,7 @@ The following validations are available:
   validates_attachment_thumbnails :avatar
 
 In order to use validations, you must have loaded the 'dm-validations' gem into your app
-(available as a part of dm-more).  If the gem isn't loaded before DM-Paperclip is loaded,
+(available as a part of dm-more).  If the gem isn't loaded before DM-Paperclip-S3 is loaded,
 the validation methods will be excluded.  You will also need to include DataMapper::Validate
 into your mode:
 

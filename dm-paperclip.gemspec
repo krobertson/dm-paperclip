@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.description = s.summary
   s.author = "Marcin Krzyżanowski"
   s.email = "marcin.krzyzanowski@hakore.com"
-  s.homepage = "http://github.com/krzak/dm-paperclip"
+  s.homepage = "http://github.com/krzak/dm-paperclip-s3"
 
   s.require_path = 'lib'
   s.files = Dir.glob("lib/**/*")
