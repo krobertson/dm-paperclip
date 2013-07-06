@@ -1,4 +1,12 @@
-require './test/helper'
+require 'rubygems'
+require 'test/unit'
+require 'shoulda'
+require 'mocha'
+require 'tempfile'
+
+require 'dm-paperclip/geometry'
+require 'dm-paperclip/processor'
+require 'dm-paperclip/thumbnail'
 
 class ThumbnailTest < Test::Unit::TestCase
 

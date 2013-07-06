@@ -1,4 +1,5 @@
-require './test/helper'
+require File.expand_path("./helper", File.dirname(__FILE__))
+
 require 'aws/s3'
 
 class StorageTest < Test::Unit::TestCase

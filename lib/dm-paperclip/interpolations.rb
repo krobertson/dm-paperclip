@@ -27,6 +27,7 @@ module Paperclip
     # and the arguments to pass, which are the attachment and style name.
     def self.interpolate pattern, *args
       all.reverse.inject( pattern.dup ) do |result, tag|
+
         result.gsub(/:#{tag}/) do |match|
           send( tag, *args )
         end
@@ -59,14 +60,11 @@ module Paperclip
     end
 
     def web_root attachment, style
-      if Object.const_defined?('Merb')
-        merb_root(attachment, style)
-      elsif Object.const_defined("Rails")
-        rails_root(attachment, style)
-      else
-        ""
-      end
-    end
+     Paperclip.config.root ||
+     merb_root(attachment, style) ||
+     rails_root(attachment, style) ||
+     ""
+     end
 
     # Returns the Rails.root constant.
     def rails_root attachment, style_name
@@ -140,6 +138,11 @@ module Paperclip
     # Returns the style, or the default style if nil is supplied.
     def style attachment, style_name
       style_name || attachment.default_style
+    end
+
+    # Returns the uuid of the instance.
+    def uuid attachment, style_name
+      attachment.instance.uuid
     end
   end
 end

@@ -30,6 +30,7 @@ require 'digest'
 require 'tempfile'
 
 require 'dm-core'
+require 'extlib'
 
 require 'dm-paperclip/ext/compatibility'
 require 'dm-paperclip/ext/class'
@@ -51,6 +52,7 @@ require 'dm-paperclip/callbacks'
 # The base module that gets included in ActiveRecord::Base. See the
 # documentation for Paperclip::ClassMethods for more useful information.
 module Paperclip
+
   # To configure Paperclip, put this code in an initializer, Rake task, or wherever:
   #
   #   Paperclip.configure do |config|
@@ -339,7 +341,7 @@ module Paperclip
       end
 
       if Paperclip.config.use_dm_validations
-        add_validator_to_context(opts_from_validator_args([name]), [name], Paperclip::Validate::CopyAttachmentErrors)
+        validators.add(Paperclip::Validate::CopyAttachmentErrors, name)
       end
 
     end

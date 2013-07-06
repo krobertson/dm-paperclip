@@ -1,4 +1,4 @@
-require './test/helper'
+require File.expand_path("./helper", File.dirname(__FILE__))
 
 class IOStreamTest < Test::Unit::TestCase
   include IOStream

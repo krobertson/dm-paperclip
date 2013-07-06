@@ -10,8 +10,7 @@ module Paperclip
       # * +greater_than+: equivalent to :in => options[:greater_than]..Infinity
       # * +message+: error message to display, use :min and :max as replacements
       def validates_attachment_size(*fields)
-        opts = opts_from_validator_args(fields)
-        add_validator_to_context(opts, fields, Paperclip::Validate::SizeValidator)
+        validators.add(Paperclip::Validate::SizeValidator, *fields)
       end
 
       # Adds errors if thumbnail creation fails. The same as specifying :whiny_thumbnails => true.
@@ -21,8 +20,7 @@ module Paperclip
 
       # Places ActiveRecord-style validations on the presence of a file.
       def validates_attachment_presence(*fields)
-        opts = opts_from_validator_args(fields)
-        add_validator_to_context(opts, fields, Paperclip::Validate::RequiredFieldValidator)
+        validators.add(Paperclip::Validate::RequiredFieldValidator, *fields)
       end
 
       # Places ActiveRecord-style validations on the content type of the file assigned. The
@@ -30,18 +28,19 @@ module Paperclip
       # * +content_type+: Allowed content types.  Can be a single content type or an array.  Allows all by default.
       # * +message+: The message to display when the uploaded file has an invalid content type.
       def validates_attachment_content_type(*fields)
-        opts = opts_from_validator_args(fields)
-        add_validator_to_context(opts, fields, Paperclip::Validate::ContentTypeValidator)
+        validators.add(Paperclip::Validate::ContentTypeValidator, *fields)
       end
 
+      # Places ActiveRecord-style validations on the geometry of the file assigned. The
+      # required options are:
+      # * +height+: a Range of pixels (i.e. 100..300+),
+      # * +width+: a Range of pixels (i.e. 100..300+)
+      def validates_attachment_geometry(*fields)
+        validators.add(Paperclip::Validate::GeometryValidator, *fields)
+      end
     end
 
     class SizeValidator < DataMapper::Validate::GenericValidator #:nodoc:
-      def initialize(field_name, options={})
-        super
-        @field_name, @options = field_name, options
-      end
-
       def call(target)
         field_value = target.validation_property_value(:"#{@field_name}_file_size")
         return true if field_value.nil?
@@ -60,11 +59,6 @@ module Paperclip
     end
 
     class RequiredFieldValidator < DataMapper::Validate::GenericValidator #:nodoc:
-      def initialize(field_name, options={})
-        super
-        @field_name, @options = field_name, options
-      end
-
       def call(target)
         field_value = target.validation_property_value(@field_name)
         if field_value.nil? || Paperclip::Ext.blank?(field_value.original_filename)
@@ -77,11 +71,6 @@ module Paperclip
     end
 
     class ContentTypeValidator < DataMapper::Validate::GenericValidator #:nodoc:
-      def initialize(field_name, options={})
-        super
-        @field_name, @options = field_name, options
-      end
-
       def call(target)
         valid_types = [@options[:content_type]].flatten
         field_value = target.validation_property_value(@field_name)
@@ -103,11 +92,6 @@ module Paperclip
     end
 
     class CopyAttachmentErrors < DataMapper::Validate::GenericValidator #:nodoc:
-      def initialize(field_name, options={})
-        super
-        @field_name, @options = field_name, options
-      end
-
       def call(target)
         field_value = target.validation_property_value(@field_name)
         unless field_value.nil? || Paperclip::Ext.blank?(field_value.original_filename)
@@ -118,6 +102,23 @@ module Paperclip
           return false
         end
         return true
+      end
+    end
+
+    class GeometryValidator < DataMapper::Validate::GenericValidator #:nodoc:
+      def call(target)
+        field_value = target.validation_property_value(@field_name)
+        return true if field_value.queued_for_write[:original].nil?
+
+        geometry = Paperclip::Geometry.from_file(field_value.queued_for_write[:original].path)
+        
+        return true if @options[:width].include?(geometry.width) && @options[:height].include?(geometry.height)
+
+        error_message ||= sprintf("%s width must be between %s and %s px", DataMapper::Inflector.humanize(@field_name), @options[:width].begin, @options[:width].end) unless @options[:width].include?(geometry.width)
+        error_message ||= sprintf("%s height must be between %s and %s px", DataMapper::Inflector.humanize(@field_name), @options[:height].begin, @options[:height].end) unless@options[:height].include?(geometry.height)
+
+        add_error(target, error_message , @field_name)
+        return false
       end
     end
 
