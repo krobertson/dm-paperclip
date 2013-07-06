@@ -4,31 +4,37 @@ require 'rubygems'
 require 'bundler'
 require 'rake'
 require 'rake/testtask'
-require 'jeweler'
-require 'yard'
 
 begin
   Bundler.setup(:default, :development)
 rescue Bundler::BundlerError => e
   $stderr.puts e.message
   $stderr.puts "Run `bundle install` to install missing gems"
-  exit e.status_code
 end
 
-Jeweler::Tasks.new do |gem|
-  # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
+begin
+  require 'jeweler'
+  Jeweler::Tasks.new do |gem|
+    # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
 
-  gem.name              = "dm-paperclip"
-  gem.author            = "Ken Robertson"
-  gem.email             = "ken@invalidlogic.com"
-  gem.homepage          = "http://invalidlogic.com/dm-paperclip/"
-  gem.platform          = Gem::Platform::RUBY
-  gem.summary           = "File attachments as attributes for DataMapper, based on the original Paperclip by Jon Yurek at Thoughtbot"
+    gem.name              = "dm-paperclip"
+    gem.author            = "Ken Robertson"
+    gem.email             = "ken@invalidlogic.com"
+    gem.homepage          = "http://invalidlogic.com/dm-paperclip/"
+    gem.platform          = Gem::Platform::RUBY
+    gem.summary           = "File attachments as attributes for DataMapper, based on the original Paperclip by Jon Yurek at Thoughtbot"
 
-  gem.requirements << "ImageMagick"
-
+    gem.requirements << "ImageMagick"
+  end
+  Jeweler::RubygemsDotOrgTasks.new
+rescue LoadError
 end
-Jeweler::RubygemsDotOrgTasks.new
+
+begin
+  require 'yard'
+  YARD::Rake::YardocTask.new
+rescue LoadError
+end
 
 # Test tasks
 desc 'Test the DM-Paperclip library.'
@@ -38,17 +44,15 @@ Rake::TestTask.new(:test) do |t|
   t.verbose = true
 end
 
-YARD::Rake::YardocTask.new
-
 desc 'Default: run unit tests.'
 task :default => [:clean, :test]
 
-# Console 
+# Console
 desc "Open an irb session preloaded with this library"
 task :console do
   sh "irb -rubygems -r dm-validations -r dm-migrations -r ./lib/dm-paperclip.rb"
 end
- 
+
 # Code coverage
 task :coverage do
   system("rm -fr coverage")
