@@ -9,11 +9,8 @@ group :development do
   gem "jeweler", "~> 1.8.0"
   gem "yard", "~> 0.8.1"
 
-  if RUBY_VERSION >= '1.9.0'
-    gem "debugger", "~> 1.1.3"
-  else
-    gem 'ruby-debug'
-  end
+  gem "ruby-debug",           :platforms => :ruby_18
+  gem "debugger", "~> 1.1.3", :platforms => [:ruby_19, :ruby_20]
 end
 
 group :test do
@@ -27,9 +24,6 @@ group :test do
   gem "do_sqlite3", "~> 0.10.10"
   gem "database_cleaner", "~> 0.7.2"
 
-  if RUBY_VERSION >= '1.9.0'
-    gem "simplecov", "~> 0.6.4"
-  else
-    gem "rcov", "~> 1.0.0"
-  end
+  gem "rcov", "~> 1.0.0",      :platforms => :ruby_18
+  gem "simplecov", "~> 0.6.4", :platforms => [:ruby_19, :ruby_20]
 end

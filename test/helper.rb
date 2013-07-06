@@ -1,8 +1,11 @@
-require 'rubygems'
+require "rubygems"
 
-require 'simplecov'
-SimpleCov.start do
-  add_filter "/test/"
+begin
+  require 'simplecov'
+  SimpleCov.start do
+    add_filter "/test/"
+  end
+rescue LoadError
 end
 
 require 'tempfile'
@@ -41,7 +44,7 @@ require File.join(ROOT, 'lib', 'dm-paperclip.rb')
 
 ENV['RAILS_ENV'] ||= 'test'
 
-FIXTURES_DIR = File.join(File.dirname(__FILE__), "fixtures") 
+FIXTURES_DIR = File.join(File.dirname(__FILE__), "fixtures")
 DataMapper.setup(:default, 'sqlite3::memory:')
 
 unless defined?(Mash)
