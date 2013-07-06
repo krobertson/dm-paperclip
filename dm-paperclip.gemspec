@@ -5,21 +5,21 @@
 
 Gem::Specification.new do |s|
   s.name = "dm-paperclip"
-  s.version = "2.4.1"
+  s.version = "2.5.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Ken Robertson"]
-  s.date = "2012-12-28"
+  s.date = "2013-07-06"
   s.email = "ken@invalidlogic.com"
   s.extra_rdoc_files = [
     "LICENSE",
-    "README.rdoc"
+    "README.md"
   ]
   s.files = [
     "Gemfile",
     "Gemfile.lock",
     "LICENSE",
-    "README.rdoc",
+    "README.md",
     "Rakefile",
     "VERSION",
     "dm-paperclip.gemspec",
@@ -101,4 +101,3 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<yard>, ["~> 0.8.1"])
   end
 end
-
