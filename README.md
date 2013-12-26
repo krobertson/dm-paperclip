@@ -2,21 +2,21 @@
 
 [![Build Status](https://secure.travis-ci.org/krobertson/dm-paperclip.png?branch=master)](https://travis-ci.org/krobertson/dm-paperclip)
 
-DM-Paperclip is a port of Thoughtbot's Paperclip plugin to work with DataMapper.
+DM-Paperclip is a port of Thoughtbot's Paperclip plugin that works with DataMapper.
 This plugin is fully compatible with the original ActiveRecord-oriented
-Paperclip.  You could take an existing ActiveRecord database and use it with
+Paperclip.  You can take an existing ActiveRecord database and use it with
 DataMapper. The module also includes updates validation handling and automatic
 including of the necessary 'property' fields into your model.
 
 To use it within your models, you need to ensure the three database fields are
 included.  They are `{name}_file_name`, `{name}_content_type`, and
-`{name}_file_size`.  The first two are strings, the final `_file_size column`
+`{name}_file_size`.  The first two are strings, the final `_file_size` column
 is an integer. So if your user model has an avatar field, then you would add
 `avatar_file_name`, `avatar_content_type`, and `avatar_file_size`.
 
 As with the original Paperclip plugin, it allows processing of thumbnails at
 the time the record is saved though ImageMagick. It processes the thumbnails
-through the command-line applications instead of using RMagick.
+through the command-line application instead of using RMagick.
 
 See the documentation for the `has_attached_file` method for options.
 
@@ -54,10 +54,10 @@ class User
 end
 ```
 
-You will need to add an initializer to configure Paperclip.  If on Rails, can
-add a `config/initializers/paperclip.rb`, on Merb can use `config/init.rb` and
-add it to the `Merb::BootLoader.after_app_loads` section.  Can also use
-environment configs, rackup file, Rake task, wherever.
+You will need to add an initializer to configure Paperclip.  If on Rails, you
+can add a `config/initializers/paperclip.rb`, and on Merb, you can use
+`config/init.rb` and add it to the `Merb::BootLoader.after_app_loads` section.
+You can also use environment configs, a rackup file, a Rake task, or whatever.
 
 ```ruby
 Paperclip.configure do |config|
@@ -128,7 +128,7 @@ validates_attachment_thumbnails :avatar
 In order to use validations, you must have loaded the 'dm-validations' gem into
 your app (available as a part of dm-more).  If the gem isn't loaded before
 DM-Paperclip is loaded, the validation methods will be excluded.  You will also
-need to include `DataMapper::Validate` into your mode:
+need to include `DataMapper::Validate` into your model:
 
 ```ruby
 class User
