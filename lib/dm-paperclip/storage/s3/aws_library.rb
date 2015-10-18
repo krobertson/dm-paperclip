@@ -28,7 +28,8 @@ module Paperclip
         end
 
         def s3_store(key,file)
-          @s3_bucket.objects[key].write(file)
+          opts = {acl: @s3_permissions}
+          @s3_bucket.objects[key].write(file, opts)
         end
 
         def s3_delete(key)

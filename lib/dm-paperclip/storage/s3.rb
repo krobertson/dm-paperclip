@@ -109,7 +109,7 @@ module Paperclip
           @bucket         = @bucket.call(self) if @bucket.is_a?(Proc)
           @s3_options     = @options[:s3_options]     || {}
           @s3_permissions = @options[:s3_permissions] || :public_read
-          @s3_protocol    = @options[:s3_protocol]    || (@s3_permissions == :public_read ? 'http' : 'https')
+          @s3_protocol    = @options[:s3_protocol]    || :https
           @s3_headers     = @options[:s3_headers]     || {}
           @s3_host_alias  = @options[:s3_host_alias]
           @s3_endpoint    = @options[:s3_endpoint]    || "s3.amazonaws.com"
