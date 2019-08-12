@@ -7,7 +7,7 @@ gem "extlib", ">= 0"
 
 group :development do
   gem "jeweler", "~> 1.8.0"
-  gem "yard", "~> 0.8.1"
+  gem "yard", "~> 0.9.20"
 
   gem "ruby-debug",           :platforms => :ruby_18
   gem "debugger", "~> 1.1.3", :platforms => [:ruby_19, :ruby_20]
