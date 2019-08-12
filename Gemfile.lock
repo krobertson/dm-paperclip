@@ -11,6 +11,7 @@ GEM
       xml-simple
     builder (3.0.0)
     columnize (0.3.6)
+    concurrent-ruby (1.1.5)
     data_objects (0.10.10)
       addressable (~> 2.1)
     database_cleaner (0.7.2)
@@ -37,7 +38,8 @@ GEM
       data_objects (= 0.10.10)
     extlib (0.9.15)
     git (1.2.5)
-    i18n (0.6.0)
+    i18n (0.9.5)
+      concurrent-ruby (~> 1.0)
     jeweler (1.8.4)
       bundler (~> 1.0)
       git (>= 1.2.5)
