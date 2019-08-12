@@ -83,14 +83,14 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<dm-migrations>, [">= 1.2.0"])
       s.add_runtime_dependency(%q<extlib>, [">= 0"])
       s.add_development_dependency(%q<jeweler>, ["~> 1.8.0"])
-      s.add_development_dependency(%q<yard>, ["~> 0.8.1"])
+      s.add_development_dependency(%q<yard>, "~> 0.9.20")
     else
       s.add_dependency(%q<dm-core>, [">= 1.2.0"])
       s.add_dependency(%q<dm-validations>, [">= 1.2.0"])
       s.add_dependency(%q<dm-migrations>, [">= 1.2.0"])
       s.add_dependency(%q<extlib>, [">= 0"])
       s.add_dependency(%q<jeweler>, ["~> 1.8.0"])
-      s.add_dependency(%q<yard>, ["~> 0.8.1"])
+      s.add_dependency(%q<yard>, "~> 0.9.20")
     end
   else
     s.add_dependency(%q<dm-core>, [">= 1.2.0"])
@@ -98,6 +98,6 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<dm-migrations>, [">= 1.2.0"])
     s.add_dependency(%q<extlib>, [">= 0"])
     s.add_dependency(%q<jeweler>, ["~> 1.8.0"])
-    s.add_dependency(%q<yard>, ["~> 0.8.1"])
+    s.add_dependency(%q<yard>, "~> 0.9.20")
   end
 end
